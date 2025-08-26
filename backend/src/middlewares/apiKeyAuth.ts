@@ -2,7 +2,7 @@
 
 
 import type { Request, Response, NextFunction } from "express";
-// import { PrismaClient } from "../generated/prisma/index.js";
+// import { PrismaClient } from "../sgenerated/prisma/index.js";
 
 import crypto from "crypto";
 import {prisma} from "../db/src/prisma.js"
@@ -38,7 +38,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     });
 
     if (!keyData) {
-      return res.status(401).json({ message: "Invalid API key" });
+      return res.status(401).json({ message:    "Invalid API key" });
     }
 
 

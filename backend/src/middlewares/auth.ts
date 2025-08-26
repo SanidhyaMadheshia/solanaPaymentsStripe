@@ -3,8 +3,14 @@ import type { NextFunction, Request, Response } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken"
 
 
+export interface PayloadJWT {
+  _id: string;
+  name: string;
+  iat?: number;
+  exp?: number;
+}
 export interface CustomRequest extends Request {
-    token : string | JwtPayload
+    token? :  PayloadJWT
 }
 
 
@@ -23,11 +29,11 @@ export function authJwtMiddleware(req : Request , res: Response , next : NextFun
         }
     
     
-        const token : string  = authorizationToken.split(" ")[0] !;
+        const token : string  = authorizationToken.split(" ")[1] !;
     
     
     
-        const payload  = jwt.verify(token , secret!);
+        const payload  = jwt.verify(token , secret!) as PayloadJWT;
     
         if(!payload) {
             return res.status(401).json({
@@ -36,7 +42,9 @@ export function authJwtMiddleware(req : Request , res: Response , next : NextFun
         }
     
     
-    
+        console.log("payLoad :" , payload);
+
+
         (req as CustomRequest).token = payload
     
         
@@ -75,8 +83,3 @@ export function createJWTtoken(userId : string , username : string): string {
     return token;
 }
 
-
-export interface PayloadJWT {
-    _id : string;
-    name : string;
-}

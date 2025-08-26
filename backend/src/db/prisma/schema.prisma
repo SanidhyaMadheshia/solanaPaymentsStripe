@@ -35,7 +35,7 @@ model ApiKey {
   keyHash   String
   label     String?
   createdAt DateTime  @default(now())
-  expiresAt DateTime?
+  // expiresAt DateTime?
   revoked   Boolean   @default(false)
 
   @@index([userId])
@@ -69,5 +69,5 @@ model Product {
   name      String
   prices    Price[]
   createdAt DateTime @default(now())
-  expiresAt DateTime
+  expiresAt DateTime?
 }
