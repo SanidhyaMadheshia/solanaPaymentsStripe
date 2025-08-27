@@ -1,8 +1,11 @@
 node_modules
 
 dist 
+generated
+
 
 .env
+
 # Logs
 logs
 *.log

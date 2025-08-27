@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  name       String?
+  pubKey     String
+  isVerified Boolean   @default(false)
+  password   String
+  apiKeys    ApiKey[]
+  products   Product[]
+  createdAt  DateTime  @default(now())
+  otps       Otp[] 
+  updatedAt  DateTime  @updatedAt
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  keyHash   String
+  label     String?
+  createdAt DateTime  @default(now())
+  // expiresAt DateTime?
+  revoked   Boolean   @default(false)
+
+  @@index([userId])
+  @@index([keyHash])
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  code      String 
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime 
+  used      Boolean  @default(false)
+
+  @@index([userId])
+  @@index([code])
+}
+
+model Price {
+  id      String  @id @default(uuid())
+  label   String?
+  product Product @relation(fields: [prod_id], references: [id], onDelete: Cascade)
+  prod_id String
+}
+
+model Product {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  name      String
+  prices    Price[]
+  createdAt DateTime @default(now())
+  expiresAt DateTime?
+}
