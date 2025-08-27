@@ -14,10 +14,13 @@ const router = Router();
 
 router.get("/createApiKey",authJwtMiddleware,  createApiKey);
 
-router.get("/sessionUrl", authMiddleware, createSessionUrl )
+router.get("/getSessionUrl", authMiddleware, createSessionUrl );
 
 
 
+
+
+    
 
 
 

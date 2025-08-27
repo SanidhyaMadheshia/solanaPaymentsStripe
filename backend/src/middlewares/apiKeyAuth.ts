@@ -9,6 +9,40 @@ import {prisma} from "../db/src/prisma.js"
 // import {prisma}
 // const prismaClient = new PrismaClient();
 
+
+// export interface PayloadJWT {
+//   _id: string;
+//   name: string;
+//   iat?: number;
+//   exp?: number;
+// }
+export  interface User {
+    name: string | null;
+    id: string;
+    email: string;
+    pubKey: string;
+    isVerified: boolean;
+    password: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface CustomApiRequest extends Request {
+    // user : User,
+    apiKey? : {
+      user : User,
+      id: string;
+      createdAt: Date;
+      userId: string;
+      keyHash: string;
+      label: string | null;
+      revoked: boolean;
+    }
+    // token? :  PayloadJWT
+}
+
+
+
+
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers["authorization"];
   if (!authHeader) {
@@ -42,8 +76,8 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     }
 
 
-    (req as any).user = keyData.user;
-    (req as any).apiKey = keyData;
+    // (req as CustomApiRequest).user = keyData.user;
+    (req as CustomApiRequest).apiKey = keyData;
 
     return next();
   } catch (err) {

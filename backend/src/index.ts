@@ -1,7 +1,7 @@
 
 
 
-import { configDotenv } from "dotenv";
+// import { configDotenv } from "dotenv";
 import express from "express";
 
 import cors from "cors";

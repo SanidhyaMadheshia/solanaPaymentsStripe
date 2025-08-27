@@ -23,6 +23,7 @@ model User {
   password   String
   apiKeys    ApiKey[]
   products   Product[]
+  invoices     Invoice[]
   createdAt  DateTime  @default(now())
   otps       Otp[] 
   updatedAt  DateTime  @updatedAt
@@ -58,6 +59,9 @@ model Otp {
 model Price {
   id      String  @id @default(uuid())
   label   String?
+  price   String 
+  currency String
+  invoices     Invoice[]
   product Product @relation(fields: [prod_id], references: [id], onDelete: Cascade)
   prod_id String
 }
@@ -68,6 +72,120 @@ model Product {
   userId    String
   name      String
   prices    Price[]
+  invoices     Invoice[]
   createdAt DateTime @default(now())
   expiresAt DateTime?
+}
+
+
+model Invoice {
+  id            String        @id @default(cuid())
+  user          User          @relation(fields: [userId], references: [id])
+  userId        String
+  product       Product       @relation(fields: [productId], references: [id])
+  productId     String
+  price         Price         @relation(fields: [priceId], references: [id])
+  priceId       String
+  webhookEvents       WebhookEvent[]  
+  // Payment details
+  amount        String        // In satoshis or smallest unit
+  currency      String        // BTC, STX, etc.
+  btcAddress    String         // Generated payment address
+  memo          String?       // Optional payment memo
+  
+  // Status tracking
+  status        InvoiceStatus @default(PENDING)
+  expiresAt     DateTime
+  paidAt        DateTime?
+  
+  // Customer info (optional)
+  customerEmail String?
+  customerName  String?
+  
+  // Merchant URLs
+  successUrl    String?
+  cancelUrl     String?
+  webhookUrl    String?
+  
+  // Security
+  // signature     String        // HMAC signature
+  
+  payments      Payment[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // @@index([btcAddress])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+enum InvoiceStatus {
+  PENDING
+  PARTIAL
+  PAID
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+
+model Payment {
+  id            String        @id @default(cuid())
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id])
+  invoiceId     String
+  
+  // Blockchain data
+  txHash        String        @unique
+  blockHeight   Int?
+  confirmations Int           @default(0)
+  amount        String        // Actual amount received
+  
+  // Status
+  status        PaymentStatus @default(UNCONFIRMED)
+  detectedAt    DateTime      @default(now())
+  confirmedAt   DateTime?
+  
+  @@index([txHash])
+  @@index([invoiceId])
+  @@index([status])
+}
+
+enum PaymentStatus {
+  UNCONFIRMED
+  CONFIRMED
+  FAILED
+}
+
+
+model WebhookEvent {
+  id          String            @id @default(cuid())
+  invoice     Invoice           @relation(fields: [invoiceId], references: [id])
+  invoiceId   String
+  
+  eventType   WebhookEventType
+  payload     Json              // Store complete webhook payload
+  status      WebhookStatus     @default(PENDING)
+  attempts    Int               @default(0)
+  maxAttempts Int               @default(3)
+  
+  nextRetry   DateTime?
+  createdAt   DateTime          @default(now())
+  sentAt      DateTime?
+  
+  @@index([status])
+  @@index([nextRetry])
+}
+
+enum WebhookEventType {
+  PAYMENT_RECEIVED
+  PAYMENT_CONFIRMED
+  INVOICE_EXPIRED
+  INVOICE_PAID
+}
+
+enum WebhookStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
 }
