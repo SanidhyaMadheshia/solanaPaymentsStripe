@@ -1,21 +1,11 @@
-
-
-
 import { configDotenv } from "dotenv";
 import express from "express";
-
 import cors from "cors";
-
-
+import findStacksTransaction from "./controllers/findStacksTransaction.js";
 
 const app = express();
+
 app.use(cors());
-
-app.use(express.json());
-
-// configDotenv();
-
-
 
 app.get("/hello", (req,res)=> {
     res.status(200).json({
@@ -24,8 +14,9 @@ app.get("/hello", (req,res)=> {
     })
 })
 
+app.get("/find-stacks-transaction", findStacksTransaction)
 
-
-app.listen(3000);
-
-
+// Start server
+app.listen(3000, () => {
+  console.log("🚀 Server running on http://localhost:3000");
+});
