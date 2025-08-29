@@ -1,7 +1,3 @@
-
-
-
-// import { configDotenv } from "dotenv";
 import express from "express";
 
 import cors from "cors";
@@ -31,8 +27,6 @@ app.use("/api/v1/userApi", routerApi);
 
 
 
-
-// configDotenv();
 
 
 

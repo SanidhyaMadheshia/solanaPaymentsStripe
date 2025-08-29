@@ -2,9 +2,10 @@ import type { Request, Response } from "express";
 import crypto from "crypto";
 import { prisma } from "../db/src/prisma.js";
 import nodemailer from "nodemailer";
-import { createJWTtoken } from "../middlewares/auth.js";
+import { createJWTtoken, type CustomRequest } from "../middlewares/auth.js";
 // import { register } from "module";
 import bcrypt from 'bcrypt';
+import { generateApiKey } from "../lib/userApiLib.js";
 
 
 export async function otpGenerationandSendEmailUser(req: Request, res: Response) {
@@ -59,8 +60,6 @@ export async function otpGenerationandSendEmailUser(req: Request, res: Response)
   }
 }
 
-
-
 export async function verifyUser(req: Request, res: Response) {
   try {
     const { email, otp } = req.body;
@@ -92,6 +91,8 @@ export async function verifyUser(req: Request, res: Response) {
     res.status(500).json({ error: "Something went wrong" });
   }
 }
+
+
 
 
 export async function registerUser(req : Request , res : Response) {
@@ -172,8 +173,6 @@ export async function registerUser(req : Request , res : Response) {
     
 }
 
-
-
 export async function loginUser(req : Request  , res: Response) {
 
     const {email , password}= req.body;
@@ -223,6 +222,139 @@ export async function loginUser(req : Request  , res: Response) {
 
 }
 
+
+
+
+
+export async  function createApiKey(req : CustomRequest , res : Response) {
+
+
+    const id = req.token!._id;
+
+    
+    const user = await prisma.user.findFirst({
+      where : {
+        id  
+      }
+    });
+    if(!user) {
+      return res.status(401).json({
+        message : "user not present  !!"
+      })
+    }
+
+    const key : string = await generateApiKey(user.email);
+
+    const keyHash = crypto.createHash("sha256").update(key.slice(3)).digest("hex");
+
+    const newApiKey = await prisma.apiKey.create({
+      data : {
+        userId : user!.id,
+        keyHash : keyHash,
+        label : "for payment"
+
+    }});
+
+    res.status(200).json({
+        message : `api key created for user email : ${user.email}`,
+        key 
+
+    });
+
+
+
+
+    
+}
+
+export async function createProduct(req: CustomRequest, res: Response) {
+  try {
+    const userId = req.token?._id;
+
+
+    const { prodName, price, label} = req.body;
+
+    if (!prodName || !price || !userId) {
+      return res.status(400).json({ error: "prodName, price, and userId are required" });
+    }
+
+
+    const product = await prisma.product.create({
+      data: {
+        name: prodName,
+        userId,
+        prices: {
+          create: {
+            label,
+            price,
+            currency : 'btc'
+
+          },
+        },
+      },
+      include: { prices: true },
+    });
+
+
+    return res.status(201).json({
+      success: true,
+      product,
+    });
+  } catch (err) {
+    console.error("Error creating product:", err);
+    return res.status(500).json({
+      error: "Something went wrong while creating product",
+    });
+  }
+}
+
+export async function createPrice(req : CustomRequest , res : Response) {
+    const userId = req.token?._id;
+
+
+
+    const   { label , price , productId }= req.body;
+
+    const product = await prisma.product.findFirst({
+      where : {
+        userId : userId! ,
+        id  : productId
+      },
+      include : {
+        prices : true
+      }
+    });
+
+    if(!product) {
+      return res.status(401).json({
+        message : "product do not exists !!"
+      });
+
+    }
+
+    
+    const updatedPrice= await prisma.price.create({
+      data : {
+        prod_id : product.id,
+        label ,
+        price,
+        currency : 'btc'
+      }
+    });
+
+
+    return res.status(200).json({
+        message : "price created succesfully",
+        updatedPrice
+    });
+
+
+
+
+    
+    
+    
+}
 
 
 
