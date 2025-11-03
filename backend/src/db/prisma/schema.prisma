@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  // output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -14,60 +7,115 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//
+// 🧩 USER & API KEYS
+//
 model User {
-  id         String    @id @default(cuid())
-  email      String    @unique
+  id         String     @id @default(cuid())
+  clerkId    String     @unique
+  email      String     @unique
   name       String?
-  pubKey     String
-  isVerified Boolean   @default(false)
-  password   String
+  pubKey     String[]                         // Solana wallet
   apiKeys    ApiKey[]
   products   Product[]
-  createdAt  DateTime  @default(now())
-  otps       Otp[] 
-  updatedAt  DateTime  @updatedAt
+  invoices   Invoice[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
 
 model ApiKey {
   id        String    @id @default(cuid())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   keyHash   String
   label     String?
-  createdAt DateTime  @default(now())
-  // expiresAt DateTime?
   revoked   Boolean   @default(false)
+  createdAt DateTime  @default(now())
 
   @@index([userId])
   @@index([keyHash])
 }
 
-model Otp {
-  id        String   @id @default(cuid())
-  code      String 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  createdAt DateTime @default(now())
-  expiresAt DateTime 
-  used      Boolean  @default(false)
-
-  @@index([userId])
-  @@index([code])
+//
+// 🛍️ PRODUCT & PRICE
+//
+model Product {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  image       String?
+  prices      Price[]
+  createdAt   DateTime  @default(now())
 }
 
 model Price {
-  id      String  @id @default(uuid())
-  label   String?
-  product Product @relation(fields: [prod_id], references: [id], onDelete: Cascade)
-  prod_id String
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label      String?
+  amount     Decimal  @db.Decimal(20, 8)
+  currency   String   // "SOL" or "USDC"
+  createdAt  DateTime @default(now())
 }
 
-model Product {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  name      String
-  prices    Price[]
-  createdAt DateTime @default(now())
-  expiresAt DateTime?
+//
+// 💸 INVOICE & PAYMENT
+//
+model Invoice {
+  id           String         @id @default(cuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId    String?
+  productName  String?
+  priceId      String?
+  priceAmount  Decimal?       @db.Decimal(20, 8)
+  currency     String
+
+  amount       Decimal        @db.Decimal(20, 8)
+  solAddress   String?        // Solana receiving address
+  status       InvoiceStatus  @default(PENDING)
+
+  expiresAt    DateTime?
+  paidAt       DateTime?
+
+  webhookUrl   String?
+  txHash       String?
+
+  // 👇 FIX: add back the relation to Payment
+  payments     Payment[]
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+model Payment {
+  id           String         @id @default(cuid())
+  invoiceId    String
+  invoice      Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  txHash       String         @unique
+  amount       Decimal        @db.Decimal(20, 8)
+  status       PaymentStatus  @default(UNCONFIRMED)
+
+  detectedAt   DateTime       @default(now())
+  confirmedAt  DateTime?
+
+  @@index([invoiceId])
+  @@index([txHash])
+}
+
+enum PaymentStatus {
+  UNCONFIRMED
+  CONFIRMED
+  FAILED
 }

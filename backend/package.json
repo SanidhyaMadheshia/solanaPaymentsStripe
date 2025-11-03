@@ -2,16 +2,20 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsc && node dist/index.js"
+    "dev": "tsc -b && node dist/index.js",
+    "build": "tsc -b ",
+    "start": "node dist/index.js",
+    "prisma:generate": "cd src/db/prisma && prisma generate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@clerk/backend": "^2.19.1",
     "@prisma/client": "^6.14.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
@@ -25,10 +29,16 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.5",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "prisma": "^6.14.0"
+    "nodemon": "^3",
+    "prisma": "^6.14.0",
+    "ts-node": "^10",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5"
   }
 }

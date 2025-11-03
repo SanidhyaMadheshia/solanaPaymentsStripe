@@ -1,138 +1,108 @@
-import type { Request, Response } from "express";
-import { generateApiKey } from "../lib/userApiLib.js";
-import { prisma } from "../db/src/prisma.js";
-import crypto from "crypto"
-import type { CustomRequest } from "../middlewares/auth.js";
+// import type { Request, Response } from "express";
+
+// import { prisma } from "../db/src/prisma.js";
+
+// import type { CustomApiRequest } from "../middlewares/apiKeyAuth.js";
 
 
 
+// export async  function createSessionUrl(req : CustomApiRequest , res : Response ) {
 
-export async  function createApiKey(req : CustomRequest , res : Response) {
-
-
-    const id = req.token!._id;
-
-    
-    const user = await prisma.user.findFirst({
-      where : {
-        id  
-      }
-    });
-    if(!user) {
-      return res.status(401).json({
-        message : "user not present  !!"
-      })
-    }
-
-    const key : string = await generateApiKey(user.email);
-
-    const keyHash = crypto.createHash("sha256").update(key.slice(3)).digest("hex");
-
-    const newApiKey = await prisma.apiKey.create({
-      data : {
-        userId : user!.id,
-        keyHash : keyHash,
-        label : "for payment"
-
-    }});
-
-    res.status(200).json({
-        message : `api key created for user email : ${user.email}`,
-        key 
-
-    });
+//     // const { pa}
+//     const {product_id, price_id , customer_email, success_url , cancel_url , webhook_url}= req.body;
 
 
+//     if(!price_id || ! product_id || !customer_email || ! success_url || ! cancel_url || ! webhook_url) {
+//       return res.status(401).json({
+//         message : "do not satisfy the required details ..."
+//       });
 
-
-    
-}
-
-
-export function createSessionUrl(req : Request , res : Response ) {
-
-    // const { pa}
-
-    res.status(200).json({
-        message : "direct working correctly "
-    });
-
-    
-}
-
-
-
-
-// export function createPrice(req : Request , res : Response) {
-
-//     const {unitAmount }= req.body;
-
-// }
-
-
-// export async  function  createProduct(req  : CustomRequest  , res : Response) {
-
-//     const {prodName, price} = req.body;
-//     if (!prodName || !price ) {
-//       return res.status(400).json({ error: "prodName, price, and userId are required" });
 //     }
 
-//     // const 
-//     try {
-//         // const product =await  prisma.product.create({
-//         //     data : {
-//         //         name: prodName,
-//         //         userId : 
-//         //     }
-//         // });
+//     const product =await  prisma.product.findFirst({
+//       where : {
+//         id : product_id,
+//         prices : {
+//           some : {
+//             id : price_id
+//           }
+//         }
+//       },
+//       include : {
+//         prices : true
+//       }
+      
+//     });
 
-//     } catch (err) {
-//         console.log(err);
+    
+    
+//     if(!product ) {
+//       return res.status(401).json({
+//         messsage : "product or price do not exist"
+//       });
+      
+//     }
+//     const priceMap = product?.prices.filter((price : {
+//       id :string
+//     })=> 
+//           price.id===price_id
+//     );
+//     if (
+//       !req.apiKey?.userId ||
+//       !product_id ||
+//       !price_id ||
+//       !priceMap[0]?.price ||
+//       !req.apiKey?.user?.pubKey
+//     ) {
+//       console.log(req.apiKey?.userId , "gaand mara ",product_id, "gaand mara" , priceMap[0]?.price,"gaand mara", req.apiKey?.user?.pubKey);
+      
+//       return res.status(400).json({ message: "Missing required invoice fields" });
+//     }
 
-//         return res.status(401).json({
-//             message : "hello bhai "
-//         })
+//     const invoice = await prisma.invoice.create({
+//       data : {
+//           userId : req.apiKey?.userId,
+//           productId : product_id,
+//           priceId : price_id,
+//           amount : priceMap[0]?.price,
+//           currency : "sBTC",
+//           btcAddress : req.apiKey?.user.pubKey,
+//           expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+//           // signature : ""
+          
+
+
+//       }
+//     })
+    
+
+//     if(!invoice) {
+//       return res.status(401).json({
+//         message : "any fault in creating invoice "
+//       });
+
 //     }
 
 
+
+//     return res.status(200).json({
+//       "invoice_id": `${invoice.id}`,
+//       "checkout_url": `https://yourgateway.com/checkout/${invoice.id}`,
+//       "amount": `${priceMap[0].price}`,
+//       "currency": "sBTC",
+//       "expires_at": "2024-01-01T12:15:00Z"
+//     })
+
+
+
+
     
 
     
 // }
 
-export async function createProduct(req: Request, res: Response) {
-  try {
-    const { prodName, price, userId } = req.body;
 
-    if (!prodName || !price || !userId) {
-      return res.status(400).json({ error: "prodName, price, and userId are required" });
-    }
 
-    // Create Product with Price in a nested transaction
-    const product = await prisma.product.create({
-      data: {
-        name: prodName,
-        userId,
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // example: 1 year expiry
-        prices: {
-          create: {
-            label: "Base Price",
-            // you’ll need to add currency + amount in schema (recommended)
-          },
-        },
-      },
-      include: { prices: true },
-    });
 
-    return res.status(201).json({
-      success: true,
-      product,
-    });
-  } catch (err) {
-    console.error("Error creating product:", err);
-    return res.status(500).json({
-      error: "Something went wrong while creating product",
-    });
-  }
-}
+
 

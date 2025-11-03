@@ -1,232 +1,139 @@
 import type { Request, Response } from "express";
 import crypto from "crypto";
 import { prisma } from "../db/src/prisma.js";
-import nodemailer from "nodemailer";
-import { createJWTtoken } from "../middlewares/auth.js";
+// import nodemailer from "nodemailer";
+import { createJWTtoken, type CustomRequest } from "../middlewares/auth.js";
 // import { register } from "module";
 import bcrypt from 'bcrypt';
+import { clerkClient } from "../lib/clerk.js";
+// import { generateApiKey } from "../lib/userApiLib.js";
 
 
-export async function otpGenerationandSendEmailUser(req: Request, res: Response) {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "Email required" });
+// export async function otpGenerationandSendEmailUser(req: Request, res: Response) {
 
-    const otpCode = crypto.randomInt(100000, 999999).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    let user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email,
-          pubKey: "", // can set later,
-          password : "",
+// }
 
-          isVerified: false,
-        },
-      });
-    }
+// export async function verifyUser(req: Request, res: Response) {
 
-    await prisma.otp.create({
-      data: {
-        code: otpCode,
-        userId: user.id,
-        expiresAt,
-      },
-    });
+// }
 
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,      // your Gmail
-        pass: process.env.GMAIL_PASS,      // your App Password (not regular Gmail password)
-      },
-    });
+// export async function registerUser(req : Request , res : Response) {
 
-    // send email
-    await transporter.sendMail({
-      from: `"Auth Service" <${process.env.GMAIL_USER}>`,
-      to: email,
-      subject: "Your OTP Code",
-      text: `Your OTP is ${otpCode}. It will expire in 5 minutes.`,
-    });
+// }
 
-    res.json({ message: "OTP sent successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-}
+// export async function loginUser(req : Request  , res: Response) {
+
+// }
 
 
 
-export async function verifyUser(req: Request, res: Response) {
-  try {
-    const { email, otp } = req.body;
-    if (!email || !otp) return res.status(400).json({ error: "Email and OTP required" });
-    const otpRecord = await prisma.otp.findFirst({
-      where: {
-        user: { email },
-        code: otp,
-        expiresAt: { gt: new Date() },
-        used: false,
-      },
-    });
-
-    if (!otpRecord) return res.status(400).json({ error: "Invalid or expired OTP" });
-
-    await prisma.otp.update({
-      where: { id: otpRecord.id },
-      data: { used: true },
-    });
-
-    await prisma.user.update({
-      where: { id: otpRecord.userId },
-      data: { isVerified: true },
-    });
-
-    res.json({ message: "User verified successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-}
 
 
-export async function registerUser(req : Request , res : Response) {
+// export async  function createApiKey(req : CustomRequest , res : Response) {
+
+    
+// }
+
+// export async function createProduct(req: CustomRequest, res: Response) {
+ 
+// }
+
+// export async function createPrice(req : CustomRequest , res : Response) {
+ 
+    
+// }
+
+
+export async function getDashboardData(req : CustomRequest , res : Response) {
+    const userId = req.token!._id;
 
     try {
-
-        const {email , pubKey , name, password } = req.body;
-    
-    
-        const user = await prisma.user.findFirst({
+        const user = await prisma.user.findUnique({
             where : {
-                email : email,
-                isVerified : true
-            },
-            
-        });
-    
-    
-        if(!user) {
-            return res.status(401).json({
-                messge : "problem while registering "
-            }); 
-    
-    
-        }
-        if(user.password) {
-            return res.status(401).json({
-                message : "already registered"
-            });
-
-        } 
-    
-        const savedPassword : string = await bcrypt.hash(password, 10);
-
-    
-    
-        const updatedUser = await prisma.user.update({
-            where : {
-                email : email
-            },
-            data : {
-                pubKey,
-                name ,
-                password : savedPassword
-                
+                id : userId
             }
         });
-
-
-        const token : string = createJWTtoken(user.id, user.name! );
-
-        res.status(200).json({
-            message : "user created successfully",
-            token ,
-            user : updatedUser
-        });
-        
-        
-    }catch(err) {
-        console.log("error : ", err);
-
-        return res.status(401).json({
-            message : "error in userControllerts"
-        });
-
-
-
-    }
-
-
-
-
-
-
-    
-
-
-    
-}
-
-
-
-export async function loginUser(req : Request  , res: Response) {
-
-    const {email , password}= req.body;
-    try {
-        
-        const user = await prisma.user.findFirst({
-            where : {
-                email 
-            }
-        });
+         
         if(!user) {
-            return res.status(401).json({
-                message : "user doesnt exits"
-            });
+            return res.status(404).json({ message: "User not found" });
         }
-    
-        const verify =  await bcrypt.compare(password, user.password);
-    
-        if(!verify) {
-            return res.status(401).json({
-                message : "incorrect password"
-            });
-        }
-    
-        const token : string = createJWTtoken(user.id, user.name! );
-    
-    
-    
-        res.status(200).json({
-            message : "user login succsessful",
-            token,
-            user 
-    
-        });
-    }catch(err) {
-        console.log("error :", err);
 
         return res.json({
-            message : "failed to login "
+            user 
         });
 
+
+    } catch (error) {
+        console.error("Error in getDashboardData:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
-
-
-    // const hasPassword = crypto.
-
-
 }
 
 
 
+// export async  function getInvoice(req : Request , res : Response ) {
+
+// }
+
+
+export async function exchangeToken(req : Request , res : Response) {
+    console.log("In exchangeToken controller hi hi");
+    try {
+        console.log("In exchangeToken controller");
+        const authHeader= req.headers.authorization;
+        if (!authHeader) {
+            return  res.status(400).json({ message: "Clerk session token missing in Authorization header" });
+        }
+        console.log("Authorization Header : ", authHeader);
+        const clerkSessionToken = authHeader.split(" ")[1];
+        console.log("Clerk Session Token received : ", clerkSessionToken);
+        const webRequest = new Request(`http://localhost:5173${req.url}`, {
+            method: req.method,
+            headers: {
+                authorization: `Bearer ${clerkSessionToken}`
+            }, 
+            // body: JSON.stringify({clerkSessionToken}) as BodyInit,
+        });
+        console.log("clerk jwt key :", process.env.CLERK_JWT_KEY);
+        const {isAuthenticated, toAuth} = await clerkClient.authenticateRequest(webRequest , {
+            jwtKey : process.env.CLERK_JWT_KEY!,
+            secretKey : process.env.CLERK_SECRET_KEY!,
+            publishableKey : process.env.CLERK_PUBLISHABLE_KEY!,
+            authorizedParties: ['http://localhost:5173'],
+        });
+
+        const clerkUserId = toAuth()?.userId;
+        console.log("Clerk User ID : ", clerkUserId);
+        if (!isAuthenticated || !clerkUserId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        let user = await prisma.user.findUnique({
+            where : {
+                clerkId : clerkUserId
+            }
+        });
+        console.log("User fetched from DB : ", user);
+        if(!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const jwtToken = createJWTtoken(
+             user.id,
+             user.name!
+        );
+
+        res.json({
+            jwtToken
+        });
 
 
 
 
 
+
+    } catch (error) {
+        console.error("Error in exchangeToken:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}

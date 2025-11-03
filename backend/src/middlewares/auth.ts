@@ -15,10 +15,12 @@ export interface CustomRequest extends Request {
 
 
 export function authJwtMiddleware(req : Request , res: Response , next : NextFunction) {
+    console.log("auth jwtmiddleware called ");
+    
     const secret = process.env.JWT_SECRET ? process.env.JWT_SECRET : "secret";
     try {
         
-        const authorizationToken = req.headers['authorization'];
+        const authorizationToken = req.headers.authorization;
     
         if(!authorizationToken) {
             return res.status(401).json({
@@ -28,8 +30,7 @@ export function authJwtMiddleware(req : Request , res: Response , next : NextFun
     
         }
     
-    
-        const token : string  = authorizationToken.split(" ")[1] !;
+          const token : string  = authorizationToken.split(" ")[1]!;
     
     
     
@@ -47,7 +48,8 @@ export function authJwtMiddleware(req : Request , res: Response , next : NextFun
 
         (req as CustomRequest).token = payload
     
-        
+        console.log("auth user : ", payload);
+
         
         next();
     }catch (err) {
@@ -73,12 +75,6 @@ export function createJWTtoken(userId : string , username : string): string {
     const token = jwt.sign({ _id: userId, name: username}, secret!, {
        expiresIn: '2 days',
      });
-
-
-    
-    
-    
-
 
     return token;
 }
