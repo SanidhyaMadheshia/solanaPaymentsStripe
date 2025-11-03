@@ -37,7 +37,7 @@ app.use("/api/v1/user",router );
 
 app.get("/test", (req, res )=> {
     res.json({
-        msg : "is mausi ka tun tun "
+        msg : "iski mausi ka tun tun !! Chal gyaaaa !! "
     });
 
 })
