@@ -6,7 +6,7 @@
 // // import { register } from "module";
 
 import  { Router } from "express"
-import { exchangeToken, getDashboardData } from "../controllers/userControllers.js";
+import { createApiKey, createPrice, createProduct, exchangeToken, getDashboardData } from "../controllers/userControllers.js";
 import { authJwtMiddleware } from "../middlewares/auth.js";
 
 
@@ -24,6 +24,10 @@ const router= Router();
 
 // router.get("/getApiKeys", authJwtMiddleware , getApiKeys)
 router.get("/dashboard", authJwtMiddleware,getDashboardData );
+router.get("/createApiKey", authJwtMiddleware,createApiKey );
+router.post("/createProduct", authJwtMiddleware , createProduct);
+router.post("/createPrice", authJwtMiddleware , createPrice);
+
 
 // router.post("/createApiKey",authJwtMiddleware,  createApiKey);
 // router.post("/createProduct",authJwtMiddleware, createProduct);

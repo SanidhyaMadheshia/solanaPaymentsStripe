@@ -1,48 +1,31 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, DollarSign } from 'lucide-react';
 import type { ProductPrice } from '../../../lib/types';
+import axios from 'axios';
+import { useDashboard, type Price } from '../../../context/dashboardContext';
 
 interface ProductPricesProps {
   productId: string;
   onUpdate: () => void;
+  productPrices : ProductPrice[]
 }
 
-export default function ProductPrices({ productId, onUpdate }: ProductPricesProps) {
+export default function ProductPrices({ productId, onUpdate,productPrices }: ProductPricesProps) {
   const [prices, setPrices] = useState<ProductPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewPriceDialog, setShowNewPriceDialog] = useState(false);
   const [newPriceLabel, setNewPriceLabel] = useState('');
   const [newPriceAmount, setNewPriceAmount] = useState('');
+  const {userData} = useDashboard();
 
   // simulate loading mock data
   useEffect(() => {
   setLoading(true);
 
   const timeoutId = setTimeout(() => {
-    const mockPrices: ProductPrice[] = [
-      {
-        id: 'price1',
-        product_id: productId,
-        user_id: 'demo-user', // ✅ optional mock user_id for consistency
-        label: 'Monthly',
-        amount: 0.5,
-        currency: 'SOL',
-        active: true,
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: 'price2',
-        product_id: productId,
-        user_id: 'demo-user',
-        label: 'Yearly',
-        amount: 5,
-        currency: 'SOL',
-        active: true,
-        created_at: new Date().toISOString(),
-      },
-    ];
+    
 
-    setPrices(mockPrices);
+    setPrices(productPrices);
     setLoading(false);
   }, 700);
 
@@ -51,7 +34,7 @@ export default function ProductPrices({ productId, onUpdate }: ProductPricesProp
 }, [productId]);
 
 
-  const createPrice = () => {
+  const createPrice = async () => {
   // 🧩 Basic validation
   if (!newPriceLabel.trim() || !newPriceAmount.trim()) return;
 
@@ -60,17 +43,55 @@ export default function ProductPrices({ productId, onUpdate }: ProductPricesProp
     alert('Please enter a valid amount');
     return;
   }
+//   model Price {
+//   id         String   @id @default(uuid())
+//   productId  String
+//   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+//   label      String
+//   amount     Decimal  @db.Decimal(20, 8)
+//   currency   String   // "SOL" or "USDC"
+//   createdAt  DateTime @default(now())
+// }
+  const {data} : {
+        data : {
+          id : string ;
+          productId : string ;
+          label : string;
+          amount : number;
+          currency : string;
+          createdAt : string 
+        }
+    }= await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/user/createPrice`,
+                    {
+                      productId : productId,
+                      priceLabel :  newPriceLabel.trim(),
+                      priceAmount : amount 
+                    },
+                    {
+                      headers: {
+                          Authorization: localStorage.getItem("jwtToken") || "",
+                          "Content-Type" : "application/json"
+                      },
+                      
+                      
+                    },
+                    
+                );
+                console.log(data);
+                
+                
 
   // 🪙 Create a new ProductPrice object (fully typed)
   const newPrice: ProductPrice = {
-    id: crypto.randomUUID(),
+    id: data.id,
     product_id: productId,
-    user_id: 'demo-user', // ✅ required field for ProductPrice
+    user_id: userData?.id!, // ✅ required field for ProductPrice
     label: newPriceLabel.trim(),
     amount,
     currency: 'SOL',
     active: true, // ✅ required field per your ProductPrice type
-    created_at: new Date().toISOString(),
+    created_at: data.createdAt
   };
 
   // 🧠 Update state

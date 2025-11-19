@@ -1,11 +1,13 @@
 import type { Request, Response } from "express";
-import crypto from "crypto";
+import crypto, { Hash } from "crypto";
 import { prisma } from "../db/src/prisma.js";
 // import nodemailer from "nodemailer";
 import { createJWTtoken, type CustomRequest } from "../middlewares/auth.js";
 // import { register } from "module";
 import bcrypt from 'bcrypt';
 import { clerkClient } from "../lib/clerk.js";
+import { generateApiKey, hashTheKey } from "../lib/userApiLib.js";
+// import { PrismaClientExtends } from "@prisma/client/extension";
 // import { generateApiKey } from "../lib/userApiLib.js";
 
 
@@ -30,19 +32,138 @@ import { clerkClient } from "../lib/clerk.js";
 
 
 
-// export async  function createApiKey(req : CustomRequest , res : Response) {
+export async  function createApiKey(req : CustomRequest , res : Response) {
 
+    const userId = req.token!._id;
+
+    try {
+        const rawLabel = req.query.label;
+        const label : string  = 
+                                (typeof rawLabel === "string")
+                                ? rawLabel
+                                : "randomString";
+
+        const newApiKey = await generateApiKey(userId);
+        console.log("New API Key generated :", newApiKey);
+        const keyHash = hashTheKey(newApiKey);
+        
+
+
+        const key = await prisma.apiKey.create({
+            data : {
+                userId ,
+                label ,
+                keyHash 
+
+
+            }
+        });
+
+
+        res.status(200).json({
+            ApiKey : newApiKey,
+            key
+        });
+
+
+    } catch(error) {
+        console.error("Error in createApiKey:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
     
-// }
+}
 
 // export async function createProduct(req: CustomRequest, res: Response) {
  
 // }
 
-// export async function createPrice(req : CustomRequest , res : Response) {
- 
-    
+export async function createPrice(req : CustomRequest , res : Response) {
+ console.log(" POST /createPrice  called");
+    const userId = req.token!._id
+    try {
+        // const requestData  = req.body;
+        // productId : productId,
+        //               priceLabel :  newPriceLabel.trim(),
+        //               priceAmount : amount 
+        let priceLabel : string  = req.body.priceLabel ;
+        let productId : string  = req.body.productId;
+        let priceAmount : string  = req.body.priceAmount;
+
+        // const newProduct = await  prisma.product.create({
+        //     data : {
+        //         userId,
+        //         name : productName,
+        //         description 
+        //     }
+        // });
+//         model Price {
+//   id         String   @id @default(uuid())
+//   productId  String
+//   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+//   label      String
+//   amount     Decimal  @db.Decimal(20, 8)
+//   currency   String   // "SOL" or "USDC"
+//   createdAt  DateTime @default(now())
 // }
+        const newPrice = await prisma.price.create({
+            data : {
+                productId : productId,
+                label : priceLabel,
+                amount : priceAmount,
+                currency : "SOL"
+
+            }
+        })
+        
+        
+
+        res.status(200).json({
+            newPrice
+        });
+
+
+
+        
+
+    } catch (error) {
+        console.error("Error in createProduct:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export async function createProduct(req : CustomRequest , res : Response) {
+    console.log(" POST /createProduct called");
+
+    const userId = req.token!._id
+    try {
+        // const requestData  = req.body;
+
+        let productName = req.body.productName ;
+        let description = req.body.productDescription;
+
+        const newProduct = await  prisma.product.create({
+            data : {
+                userId,
+                name : productName,
+                description 
+            }
+        });
+        
+        
+
+        res.status(200).json({
+            newProduct
+        });
+
+
+
+        
+
+    } catch (error) {
+        console.error("Error in createProduct:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
 
 
 export async function getDashboardData(req : CustomRequest , res : Response) {
@@ -52,12 +173,27 @@ export async function getDashboardData(req : CustomRequest , res : Response) {
         const user = await prisma.user.findUnique({
             where : {
                 id : userId
+            },
+            include : {
+                apiKeys : true,
+                products : {
+                    include : {
+                        prices : true
+                    }
+                },
+                invoices : {
+                    include : {
+                        payments : true
+                    }
+                }
             }
         });
          
         if(!user) {
             return res.status(404).json({ message: "User not found" });
         }
+        
+        console.log(user);
 
         return res.json({
             user 

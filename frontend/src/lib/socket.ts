@@ -1,0 +1,24 @@
+// src/socket.ts
+// import process from "process";
+import { io, Socket } from "socket.io-client";
+
+// Define your backend URL
+const SOCKET_URL ="http://localhost:3003"; // change in production
+
+// Define types (optional but recommended)
+interface ServerToClientEvents {
+  message: (data: any) => void;
+  "payment:success": (payload: { invoiceId: string }) => void;
+}
+
+interface ClientToServerEvents {
+  message: (data: any) => void;
+  "payment:initiate": (invoiceId: string) => void;
+  "Client:checkInvoice": (invoice: string) => void;
+}
+
+// Initialize socket with types and custom path
+export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(SOCKET_URL, {
+  path: "/ws/",
+  autoConnect: false, // connect manually when needed
+});

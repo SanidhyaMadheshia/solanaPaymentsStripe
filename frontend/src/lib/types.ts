@@ -52,5 +52,55 @@ export type Product = {
   name: string;
   description: string;
   created_at: string;
-  prices?: ProductPrice[]; // 👈 optional
+  prices?: ProductPrice[]; // optional
 };
+
+export interface Invoice {
+  id: string;
+  userId: string;
+  productId: string;
+  productName: string;
+  priceId: string;
+
+  amount: string;
+  priceAmount: string;
+  currency: string;
+  numberOfItems: number;
+
+  buyerEmail: string;
+  solAddress: string | null;
+
+  status: "PENDING" | "PAID" | "FAILED" | string;
+
+  txHash: string | null;
+
+  cancelUrl: string;
+  successUrl: string;
+  webhookUrl: string;
+
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  paidAt: string | null;
+}
+
+export interface Session {
+  id: string;
+  invoiceId: string;
+
+  buyerEmail: string;
+  buyerWallet: string;
+
+  status: "PENDING" | "COMPLETED" | "EXPIRED" | string;
+  txHash : string ;
+  
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  completedAt: string | null;
+}
+export interface InvoiceResponse {
+  status: string;
+  session: Session | null;   // session may exist or may be null
+  invoice: Invoice;
+}

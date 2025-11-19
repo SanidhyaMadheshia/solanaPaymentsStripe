@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Edit2, ChevronDown, ChevronUp, Currency } from 'lucide-react';
 import type { Product, ProductPrice } from '../../../lib/types';
 import ProductPrices from './ProductsPrice';
+import axios from 'axios';
+import { useDashboard, type DashboardContextType , type Product as ProductType, type Price as PriceType} from '../../../context/dashboardContext';
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -11,74 +13,103 @@ export default function Products() {
   const [newProductDescription, setNewProductDescription] = useState('');
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [productPrices, setProductPrices] = useState<Record<string, ProductPrice[]>>({});
-
+  const data : DashboardContextType = useDashboard();
   // Mock data load
   useEffect(() => {
-    const mockProducts: Product[] = [
-      {
-        id: '1',
-        name: 'Premium Subscription',
-        description: 'Unlock all premium features.',
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        name: 'Starter Pack',
-        description: 'Basic plan for new users.',
-        created_at: new Date().toISOString(),
-      },
-    ];
+    console.log("use Effect is");
+    console.log(data);  
 
-    const mockPrices: Record<string, ProductPrice[]> = {
-      '1': [
-        {
-          id: 'p1',
-          product_id: '1',
-          user_id: 'demo-user',
-          label: 'Monthly Plan',
-          amount: 1999,
-          currency: 'USD',
-          active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 'p2',
-          product_id: '1',
-          user_id: 'demo-user',
-          label: 'Yearly Plan',
-          amount: 9999,
-          currency: 'USD',
-          active: true,
-          created_at: new Date().toISOString(),
-        },
-      ],
-      '2': [
-        {
-          id: 'p3',
-          product_id: '2',
-          user_id: 'demo-user',
-          label: 'Starter Monthly',
-          amount: 999,
-          currency: 'USD',
-          active: true,
-          created_at: new Date().toISOString(),
-        },
-      ],
-    };
+    if (data.loading) return;
+    console.log(data?.userData?.products);
+    if (!data?.userData?.apiKeys) return;
+//     export type Price = {
+//   id: string;
+//   product_id: string;
+//   amount: number;
+//   currency: string;
+//   interval: 'month' | 'year';
+// };
+// export interface ProductPrice {
+//   id: string;
+//   product_id: string;
+//   user_id: string;
+//   label: string;
+//   amount: number;
+//   currency: string;
+//   active: boolean;
+//   created_at: string;
+// }
+    const mappedProducts: Product[] = data.userData.products.map((p : ProductType )=> {
+      return {
 
-    setProducts(mockProducts);
-    setProductPrices(mockPrices);
+        id: p.id,
+        name: p.name,
+        description: p.description ? p.description : "",
+        created_at: p.createdAt.toString(),
+        prices: p.prices.map((price : PriceType) : ProductPrice=> {
+            return {
+              id : price.id,
+              product_id : p.id,
+              amount : parseFloat(price.amount),
+              currency : price.currency,
+              user_id : data.userData?.id!,
+              label : price.label,
+              active : true,
+              created_at : price.createdAt.toString()
+            }
+        })
+
+      }
+    });
+
+    const mappedPrices: Record<string, ProductPrice[]> = mappedProducts.reduce(
+      (acc, product) => {
+        acc[product.id] = product.prices ? product.prices : [];
+        return acc;
+      },
+      {} as Record<string, ProductPrice[]>
+    );
+
+    setProducts(mappedProducts);
+    setProductPrices(mappedPrices);
     setLoading(false);
-  }, []);
+  }, [data.loading, data.userData]);
 
-  const createProduct = () => {
+  const createProduct = async  () => {
     if (!newProductName.trim()) return;
+    const {data} : {
+        data : {
+            name: string;
+            id: string;
+            createdAt: Date;
+            userId: string;
+            description: string | null;
+            image: string | null;
+        }
+    }= await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/user/createProduct`,
+                    {
+                      productName : newProductName,
+                      productDescription : newProductDescription
+                    },
+                    {
+                      headers: {
+                          Authorization: localStorage.getItem("jwtToken") || "",
+                          "Content-Type" : "application/json"
+                      },
+                      
+                      
+                    },
+                    
+                );
+    console.log("new Product data :", data);
+
 
     const newProduct = {
-      id: crypto.randomUUID(),
-      name: newProductName,
-      description: newProductDescription,
-      created_at: new Date().toISOString(),
+      id: data.id,
+      name: data.name,
+      description: data.description ?data.description  : "no description",
+      created_at: data.createdAt.toISOString(),
     };
 
     setProducts((prev) => [newProduct, ...prev]);
@@ -237,7 +268,7 @@ export default function Products() {
 
                 {isExpanded && (
                   <div className="border-t border-[#262626] bg-[#080808] p-4">
-                    <ProductPrices productId={product.id} onUpdate={() => {}} />
+                    <ProductPrices productId={product.id} productPrices={productPrices[product.id]} onUpdate={() => {}} />
                   </div>
                 )}
               </div>

@@ -17,6 +17,16 @@ export async function generateApiKey(userId: string) : Promise<string> {
 
 }
 
+export function hashTheKey(apiKey : string){
+
+  const keyHash = crypto.createHash("sha256").update(apiKey).digest("hex");
+
+  return keyHash;
+  
+}
+  
+
+
 
 
 

@@ -9,6 +9,8 @@ import SignupPage from './components/pages/signup/Signup'
 import DeveloperDashboard from './components/pages/dashboard/Page'
 import Checkout from './components/pages/checkout/Page'
 import Landing from './components/pages/landingpage/Page'
+import { DashboardProvider } from './context/dashboardContext'
+import {SolanaProvider} from './providers/SolanaProvider'
 // import Dashboard from './components/pages/dashboard/Page'
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -22,7 +24,13 @@ function App() {
     <>
       <Routes>
         <Route path='/' element={<Landing/>}/>
-        <Route path='/checkout' element={<Checkout/>}/>
+        <Route path='/checkout/:invoiceId' element={
+          <SolanaProvider>
+
+            <Checkout/>
+          </SolanaProvider>
+          
+          }/>
         <Route
           path='/*'
           element={
@@ -31,7 +39,12 @@ function App() {
             <Routes>
 
               <Route path='/signup' element={<SignupPage />} />
-              <Route path='/user/dashboard' element={<DeveloperDashboard/>}/>
+              <Route path='/user/dashboard' element={
+                <DashboardProvider>
+
+                  <DeveloperDashboard/>
+                </DashboardProvider>
+                }/>
             </Routes>  
             </ClerkProvider>
           }

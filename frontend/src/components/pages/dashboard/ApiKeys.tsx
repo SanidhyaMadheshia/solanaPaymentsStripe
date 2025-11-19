@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Trash2, Copy, Check, Eye, EyeOff, Key } from 'lucide-react';
+import axios from 'axios';
+import { useDashboard , type DashboardContextType} from '../../../context/dashboardContext';
 
 interface ApiKey {
   id: string;
@@ -9,19 +11,15 @@ interface ApiKey {
 }
 
 export default function ApiKeys() {
+  const data : DashboardContextType = useDashboard();
+
+  if (data.loading) return <p className="text-gray-400">Loading...</p>;
+
+
+
+
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([
-    {
-      id: '1',
-      key_name: 'Production API Key',
-      key_prefix: 'sk_live_12345abcd...',
-      created_at: '2025-10-20T12:00:00Z',
-    },
-    {
-      id: '2',
-      key_name: 'Test API Key',
-      key_prefix: 'sk_test_98765zyxw...',
-      created_at: '2025-11-01T15:30:00Z',
-    },
+    
   ]);
 
   const [showNewKeyDialog, setShowNewKeyDialog] = useState(false);
@@ -29,29 +27,80 @@ export default function ApiKeys() {
   const [generatedKey, setGeneratedKey] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set());
+  
 
-  const generateApiKey = () => {
-    const prefix = 'sk_live_';
-    const randomPart = Array.from({ length: 32 }, () =>
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.charAt(
-        Math.floor(Math.random() * 62)
-      )
-    ).join('');
-    return prefix + randomPart;
-  };
 
-  const createApiKey = () => {
+
+useEffect(() => {
+  console.log("use Effect is");
+  console.log(data);
+
+  if (data.loading) return;
+  console.log(data?.userData?.apiKeys);
+  if (!data?.userData?.apiKeys) return;
+
+
+  
+  const mapped: ApiKey[] = data.userData.apiKeys.map((k: any) => ({
+    id: k.id,
+    key_name: k.label ?? k.key_name ?? 'Unnamed key',
+    key_prefix:
+      (k.preview ??
+        (k.label ? `${k.label.slice(0, 15)}...` : '') ??
+        k.key_prefix ??
+        '').toString(),
+    created_at: k.createdAt ?? k.created_at ?? new Date().toISOString(),
+  }));
+
+  setApiKeys(mapped);
+  console.log("mapped:" , mapped);
+}, [data.loading, data.userData]);
+
+
+  const createApiKey = async () => {
     if (!newKeyName.trim()) return;
 
+    const resData  = await axios.get(
+                    `${import.meta.env.VITE_BACKEND_URL}/user/createApiKey`,
+                    {
+                      headers: {
+                          Authorization: localStorage.getItem("jwtToken") || "",
+                      },
+                      params : {
+                        label : `${newKeyName}`
+                      }
+                    }
+                );
+
+    console.log(resData.data);
+
+    const data : {
+      ApiKey : string,
+      key : {
+        label: string | null;
+        id: string;
+        createdAt: Date;
+        userId: string;
+        keyHash: string;
+        revoked: boolean;
+      }
+    }= resData.data;
+
+
+
+    
+
+
+
     const newKey = {
-      id: Date.now().toString(),
-      key_name: newKeyName,
-      key_prefix: generateApiKey().slice(0, 15) + '...',
-      created_at: new Date().toISOString(),
+      id: data.key.id,
+      key_name: data.key.label ?? 'Unnamed key',
+      key_prefix: data.key.keyHash.slice(0, 15) + '...',
+      created_at: data.key.createdAt.toString(),
     };
 
     setApiKeys((prev) => [newKey, ...prev]);
-    setGeneratedKey(generateApiKey());
+    setGeneratedKey(data.ApiKey);
     setNewKeyName('');
   };
 
@@ -78,6 +127,7 @@ export default function ApiKeys() {
   return (
     <div className="space-y-6">
       {/* Header */}
+     
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-white">API Keys</h2>
@@ -98,6 +148,8 @@ export default function ApiKeys() {
       {showNewKeyDialog && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-[#0c0c0c] border border-[#262626] rounded-xl max-w-md w-full p-6">
+
+
             {generatedKey ? (
               <div className="space-y-4">
                 <div>

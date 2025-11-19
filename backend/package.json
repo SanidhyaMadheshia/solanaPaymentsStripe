@@ -8,7 +8,8 @@
     "dev": "tsc -b && node dist/index.js",
     "build": "tsc -b ",
     "start": "node dist/index.js",
-    "prisma:generate": "cd src/db/prisma && prisma generate"
+    "prisma:generate": "cd src/db/prisma && prisma generate",
+    "prisma:migrate": "cd src/db/prisma && prisma migrate dev"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,9 @@
   "dependencies": {
     "@clerk/backend": "^2.19.1",
     "@prisma/client": "^6.14.0",
+    "@solana-program/system": "^0.10.0",
+    "@solana/kit": "^5.0.0",
+    "@solana/web3.js": "^1.98.4",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/dotenv": "^6.1.1",
@@ -27,9 +31,11 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.5",
     "nodemon": "^3.1.10",
+    "socket.io": "^4.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },

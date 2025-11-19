@@ -7,9 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//
-// 🧩 USER & API KEYS
-//
 model User {
   id         String     @id @default(cuid())
   clerkId    String     @unique
@@ -19,6 +16,7 @@ model User {
   apiKeys    ApiKey[]
   products   Product[]
   invoices   Invoice[]
+  // sessions   CheckoutSession[]
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 }
@@ -36,9 +34,6 @@ model ApiKey {
   @@index([keyHash])
 }
 
-//
-// 🛍️ PRODUCT & PRICE
-//
 model Product {
   id          String    @id @default(uuid())
   userId      String
@@ -54,15 +49,13 @@ model Price {
   id         String   @id @default(uuid())
   productId  String
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  label      String?
+  label      String
   amount     Decimal  @db.Decimal(20, 8)
   currency   String   // "SOL" or "USDC"
   createdAt  DateTime @default(now())
 }
 
-//
-// 💸 INVOICE & PAYMENT
-//
+
 model Invoice {
   id           String         @id @default(cuid())
   userId       String
@@ -73,29 +66,23 @@ model Invoice {
   priceId      String?
   priceAmount  Decimal?       @db.Decimal(20, 8)
   currency     String
-
+  buyerEmail   String?
   amount       Decimal        @db.Decimal(20, 8)
   solAddress   String?        // Solana receiving address
   status       InvoiceStatus  @default(PENDING)
-
+  successUrl   String?
+  cancelUrl    String?
   expiresAt    DateTime?
   paidAt       DateTime?
-
+  sessions     CheckoutSession[]
+  numberOfItems Int         @default(1)
   webhookUrl   String?
   txHash       String?
 
-  // 👇 FIX: add back the relation to Payment
   payments     Payment[]
 
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
-}
-
-enum InvoiceStatus {
-  PENDING
-  PAID
-  EXPIRED
-  CANCELLED
 }
 
 model Payment {
@@ -113,6 +100,45 @@ model Payment {
   @@index([invoiceId])
   @@index([txHash])
 }
+model CheckoutSession {
+  id           String           @id @default(cuid())
+  // sessionKey   String           @unique      // Public token like "cs_abc123"
+
+  // userId       String
+  // user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  invoiceId    String
+  invoice      Invoice          @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  buyerWallet  String
+  buyerEmail   String?
+  txHash     String
+
+
+  status       CheckoutStatus   @default(PENDING)
+  expiresAt    DateTime         // e.g., now() + 10 minutes
+  completedAt  DateTime?
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // @@index([userId])
+  @@index([invoiceId])
+}
+enum CheckoutStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
 
 enum PaymentStatus {
   UNCONFIRMED
