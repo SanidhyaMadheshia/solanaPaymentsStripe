@@ -114,7 +114,7 @@ model CheckoutSession {
   buyerEmail   String?
   txHash     String
 
-
+  socketid    String?
   status       CheckoutStatus   @default(PENDING)
   expiresAt    DateTime         // e.g., now() + 10 minutes
   completedAt  DateTime?

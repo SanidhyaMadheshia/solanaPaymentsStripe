@@ -1,56 +1,63 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CheckCircle2, Wallet, Copy, Check, Zap } from 'lucide-react';
 import { useParams } from 'react-router';
 import { socket } from '../../../lib/socket';
 import axios from 'axios';
-import WalletConnectButton from './WalletOverlay';
-import { useWallets, useConnect } from '@wallet-standard/react';
 
-import {Transaction} from "@solana/web3.js"
-import { SolanaContext } from '@/providers/SolanaProvider';
-import type { InvoiceResponse,  Invoice, Session } from '@/lib/types';
+
+import type { InvoiceResponse, Invoice, Session } from '@/lib/types';
 import { pay } from '@/lib/solana';
-// import { d } from 'node_modules/@clerk/clerk-react/dist/useAuth-Bcz-8Uh_.d.mts';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { WalletButton } from '@/components/connectButton';
 
 export default function Checkout() {
 
   const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
+  const [walletAddress, setWalletAddress] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
-
   const [invoice, setInvoice] = useState<Invoice>({} as Invoice);
   const [loadingInvoice, setLoadingInvoice] = useState(true);
   const [session, setSession] = useState<Session>();
-
-
   const [sessionAllowed, setSessionAllowed] = useState<boolean>(true);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
-  const [solanaAddress , setSolanaAddress] = useState<string>('');
+  const [solanaAddress, setSolanaAddress] = useState<string>('');
+  const [isVerifying, setIsVerifying] = useState<boolean>(true);
+  const [txnCompleted, setTxnCompleted] = useState<boolean>(false);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [isWaitingForVerification, setIsWaitingForVerification] = useState(false);
+
+
   const { invoiceId } = useParams();
-  
+
 
   // const {} = useContext()
-  const solana = useContext(SolanaContext);
+  // const solana = 
+  // const solana = useContext(SolanaContext);
+  const { sendTransaction, connected, publicKey } = useWallet();
+  console.log("connection : ", connected);
 
+  const { connection } = useConnection();
 
 
   // 1️⃣ Fetch invoice + ask backend if session can be initiated
   useEffect(() => {
     async function fetchInvoice() {
       try {
-        console.log(solana?.selectedAccount?.address);
 
-        const { data }  = await axios.get<InvoiceResponse>(
+        // console.log(solana?.s  electedAccount?.address);
+
+
+        const { data } = await axios.get<InvoiceResponse>(
           `${import.meta.env.VITE_BACKEND_URL}/invoice/${invoiceId}`, {
-            headers : {
-              "x-wallet-address" : solana?.selectedAccount?.address
-            }
-          }
-        );  
-        
+          headers: {
+            "x-wallet-address": publicKey?.toString() || "",
+          },
+        }
+        );
+
         console.log("invoice data", data);
 
         setInvoice(data.invoice);
@@ -59,60 +66,82 @@ export default function Checkout() {
         setLoadingInvoice(false);
         setSessionAllowed(true);
         setIsConnected(true);
-        setWalletAddress(solana?.selectedAccount?.address || '');
+        setWalletAddress(publicKey?.toString() || "");
         setSolanaAddress(data.invoice.solAddress || '');
         socket.connect();
-        socket.emit("payment:initiate",(invoiceId as string));
+
+        socket.on("connect", async () => {
+
+          console.log("socketId : ", socket.id);
+          await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/invoice/${invoiceId}`, {
+            socketId: socket.id,
+            sessionId: data.session?.id
+
+          }
+          );
+          socket.emit("payment:initiate", (invoiceId as string));
+        });
+
+        if (!socket.connected) socket.connect();
+
+        const onConnect = async () => {
+          console.log("socketId : ", socket.id);
+
+          const res = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/invoice/${invoiceId}`,
+            {
+              socketId: socket.id,
+              sessionId: data.session?.id,
+            }
+          );
+
+          console.log(res);
+
+
+          socket.emit("payment:initiate", invoiceId as string);
+        };
+
+        socket.on("connect", onConnect);
+
+        // cleanup
+        return () => {
+          socket.off("connect", onConnect);
+        };
 
       } catch (err) {
         console.error(err);
         setLoadingInvoice(false);
       }
     }
-    if(solana?.isConnected) {
+    if (connected) {
       console.log("fetching invoice");
       fetchInvoice();
     }
 
-    console.log("askdfajkwsdf" , solana);
-
-  }, [solana?.isConnected]);
-
-  // useEffect(() => {
-//   if (!solana?.isConnected) return;
-
-//   // async function startSession() {
-//   //   try {
-//   //     const sessionResp = await axios.post(
-//   //       `${import.meta.env.VITE_BACKEND_URL}/session/initiate`,
-//   //       { invoiceId }
-//   //     );
-
-//   //     setSessionAllowed(sessionResp.data.allowed);
-//   //     if (!sessionResp.data.allowed) return;
-
-//   //     // start timers / sockets
-//   //     // socket.emit("join-session", { invoiceId });
-
-//   //   } catch (err) {
-//   //     console.error(err);
-//   //   }
-//   // }
-
-//   // startSession();
-// }, []);
-  
+  }, [connected]);
 
 
 
 
+  // Listen for backend verification event
+  useEffect(() => {
+    function handleVerified(data: any) {
+      console.log("Payment verified by backend:", data);
 
+      if (data?.success) {
+        setIsVerified(true);
+        window.location.href = invoice.successUrl;
+      }
+    }
 
+    socket.on("payment:verified", handleVerified);
 
+    return () => {
+      socket.off("payment:verified", handleVerified);
+    };
+  }, [invoice]);
 
-
-
-  // 2️⃣ Wallet connect logic
 
 
   const handleCopyAddress = () => {
@@ -121,25 +150,34 @@ export default function Checkout() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handlePayment = async () => {
+    try {
+      setIsPaying(true);
 
-  const handlePayment = () => {
+      const signature = await pay({
+        txBase64: session?.txHash!,
+        sendTransaction,
+        connection,
+      });
 
-
-    setIsPaying(true);
-
-    pay({
-      txBase64 : session?.txHash!
-    });
-
-    
-    setTimeout(() => {
       setIsPaying(false);
-      setPaymentComplete(true);
-    }, 2000);
+      socket.emit("Client:PaymentDone", {
+        txnSignature: signature ?? "",
+        sessionId: session?.id,
+        SocketId: socket.id!
+      });
+
+      
+
+      // wait for backend to confirm it
+      setIsWaitingForVerification(true);
+
+    } catch (err) {
+      console.error("Payment error:", err);
+      setIsPaying(false);
+    }
   };
 
-
-  // const solanaAddress = 'EaP5MoUPNmXfhvwVNvYDwjPUuJXjzSzVDkHtGFZgZqLN';
 
   const orderDetails = {
     productName: invoice.productName || "Loading product...",
@@ -152,7 +190,6 @@ export default function Checkout() {
 
 
 
-  // 🛑 Case: Another User already has session
   if (sessionAllowed === false) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 text-center">
@@ -216,16 +253,23 @@ export default function Checkout() {
   return (
     <div className="relative min-h-screen bg-[#050505] flex flex-row items-center justify-center p-4 ">
 
-
-      {!solana?.isConnected && (
+      {isWaitingForVerification && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="text-white text-center space-y-4">
+            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
+            <p className="text-gray-300">Waiting for payment confirmation...</p>
+          </div>
+        </div>
+      )}
+      {!connected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-lg">
           hello
-          <WalletConnectButton />
+          <WalletButton />
         </div>
       )}
 
 
-      <div className={`${!solana?.isConnected ? "blur-lg pointer-events-none select-none" : ""} max-w-2xl w-full`}>
+      <div className={`${!connected ? "blur-lg pointer-events-none select-none" : ""} max-w-2xl w-full`}>
 
 
 
@@ -256,8 +300,6 @@ export default function Checkout() {
               </p>
             )}
           </div>
-
-
 
 
           {/* If invoice loading show skeleton */}
@@ -313,7 +355,7 @@ export default function Checkout() {
               <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
                 Payment Method
               </h2>
-              
+
               {isConnected ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-4 bg-[#0a0a0a] rounded-lg border border-[#262626]">
@@ -405,5 +447,7 @@ export default function Checkout() {
         </div>
       </div>
     </div>
+
+
   );
 }

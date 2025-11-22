@@ -10,7 +10,10 @@ import DeveloperDashboard from './components/pages/dashboard/Page'
 import Checkout from './components/pages/checkout/Page'
 import Landing from './components/pages/landingpage/Page'
 import { DashboardProvider } from './context/dashboardContext'
-import {SolanaProvider} from './providers/SolanaProvider'
+import { WalletContextProvider } from './providers/SolanaProvider'
+import { ChainContextProvider } from './context/ChainContextProvider'
+import { SelectedWalletAccountContextProvider } from './context/SelectedWalletAccountContextProvider'
+import { RpcContextProvider } from './context/RpcContextProvider'
 // import Dashboard from './components/pages/dashboard/Page'
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -23,29 +26,39 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path='/' element={<Landing/>}/>
+        <Route path='/' element={<Landing />} />
         <Route path='/checkout/:invoiceId' element={
-          <SolanaProvider>
+          <WalletContextProvider>
 
-            <Checkout/>
-          </SolanaProvider>
-          
-          }/>
+            <ChainContextProvider>
+              <SelectedWalletAccountContextProvider>
+                <RpcContextProvider>
+
+
+                  <Checkout />
+
+
+                </RpcContextProvider>
+              </SelectedWalletAccountContextProvider>
+            </ChainContextProvider>
+
+          </WalletContextProvider>
+        } />
         <Route
           path='/*'
           element={
             <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
 
-            <Routes>
+              <Routes>
 
-              <Route path='/signup' element={<SignupPage />} />
-              <Route path='/user/dashboard' element={
-                <DashboardProvider>
+                <Route path='/signup' element={<SignupPage />} />
+                <Route path='/user/dashboard' element={
+                  <DashboardProvider>
 
-                  <DeveloperDashboard/>
-                </DashboardProvider>
-                }/>
-            </Routes>  
+                    <DeveloperDashboard />
+                  </DashboardProvider>
+                } />
+              </Routes>
             </ClerkProvider>
           }
         />

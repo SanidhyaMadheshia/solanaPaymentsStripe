@@ -34,7 +34,6 @@ export async function createSessionUrl(req: CustomApiRequest, res: Response) {
 
     const priceObj = product.prices.find((p) => p.id === price_id);
 
-    // Create Invoice only
     const invoice = await prisma.invoice.create({
       data: {
         userId: req.apiKey!.userId,
@@ -49,13 +48,11 @@ export async function createSessionUrl(req: CustomApiRequest, res: Response) {
         solAddress : solAddress,
         amount: priceObj!.amount.toNumber() * numberOfItems,
         numberOfItems,
-        // solAddress: req.apiKey?.user?.pubKey[0] || null,
         webhookUrl: webhook_url,
         expiresAt: new Date(Date.now() + 15 * 60 * 1000),
       },
     });
 
-    // Return only invoice URL
     return res.status(200).json({
       message: "Invoice created. Redirect customer to checkout.",
       invoice_id: invoice.id,
