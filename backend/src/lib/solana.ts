@@ -4,9 +4,29 @@ import {
     SystemProgram,
     LAMPORTS_PER_SOL,
     Connection,
-    Transaction
+    Transaction,
+    type ParsedTransactionWithMeta
 } from "@solana/web3.js";
 import { prisma } from "../db/src/prisma.js";
+import axios from "axios";
+
+
+
+import fs from "fs";
+import path from "path";
+
+import bs58 from "bs58";
+
+function decodeLamports(data: string): number {
+    console.log("data in decodeLamports", data);
+
+    const buffer = Buffer.from(data, "hex");
+
+    // instruction = buffer.readUInt32LE(0); // optional
+    const lamports = buffer.readBigUInt64LE(4);
+
+    return Number(lamports);
+}
 
 const rpc = createSolanaRpc("https://api.devnet.solana.com");
 
@@ -104,23 +124,29 @@ export async function decodeTransferSignature(signature: string) {
 
 
     console.log("signature in decode ", signature)
-    
+
     // await connection.confirmTransaction(signature, "confirmed");
-    let txn = null;
+    // let txn = null;
 
     // 2. Retry getParsedTransaction for up to 2 seconds
-    for (let i = 0; i < 10; i++) {
-        txn = await connection.getParsedTransaction(signature, {
-            maxSupportedTransactionVersion: 0
-        });
+    // for (let i = 0; i < 10; i++) {
+    //     const data  = await connection.getParsedTransaction(signature, {
+    //         maxSupportedTransactionVersion: 0
+    //     });    
 
-        if (txn) break;
+    //     if (txn) break;
 
-        // Wait 200ms
-        await new Promise((res) => setTimeout(res, 200));
-    }
+    //     // Wait 200ms
+    //     await new Promise((res) => setTimeout(res, 200));
+    // }
+    const data = await axios.get<{ txSignature: ParsedTransactionWithMeta }>(`http://localhost:3000/api/solana/services/transaction/${signature}`);
 
-    
+
+    console.log("data in decode ", data.data);
+    const txn = data.data.txSignature;
+
+
+
 
 
     if (!txn) {
@@ -182,6 +208,7 @@ export async function verifyPayment({
 
         const txnHashDetails = decodeTransferTxnHash(session?.txHash!);
 
+        console.log("txnHashDetails unsigned one  ", txnHashDetails);
 
         const txnSignatureDetails = await decodeTransferSignature(txnSignature);
 
@@ -211,15 +238,45 @@ export async function verifyPayment({
 
         }
 
+        const parserdPath = path.join(
+            process.cwd(),
+            "transactions",
+            `parsedTransfer.json`
+        );
 
+        const txnHashPath = path.join(
+            process.cwd(),
+            "transactions",
+            `txnHashPath.json`
+        );
+
+
+
+        // json.stringify(parsedTransfers, null, 2);
+
+        fs.mkdirSync(path.dirname(parserdPath), { recursive: true });
+        fs.mkdirSync(path.dirname(txnHashPath), { recursive: true });
+
+        // save JSON to file
+        fs.writeFileSync(
+            parserdPath,
+            JSON.stringify(parsedTransfers, null, 2),
+            "utf-8"
+        );
+        fs.writeFileSync(
+            txnHashPath,
+            JSON.stringify(txnHashDetails, null, 2),
+            "utf-8"
+        );
 
 
         for (let i = 0; i < parsedTransfers.length; i++) {
             const origIx = txnHashDetails.instructions[i];
             const signedIx = parsedTransfers[i];
 
-            const origFrom = origIx!.keys.find((k) => k.isSigner)?.pubKey;
-            const origTo = origIx!.keys.find((k) => !k.isSigner)?.pubKey;
+            const origFrom = origIx!.keys[0]!.pubKey;
+            const origTo = origIx!.keys[1]!.pubKey;
+
 
             const signedFrom = signedIx!.parsed.info.source;
             const signedTo = signedIx!.parsed.info.destination;
@@ -232,9 +289,8 @@ export async function verifyPayment({
                 throw new Error("Receiver pubkey mismatch");
 
             // Decode lamports from original base64 instruction
-            const origLamports = Number(
-                Buffer.from(origIx!.data, "hex").readBigUInt64LE(1)
-            );
+            const origLamports = decodeLamports(origIx!.data);
+            console.log("origLamports ", origLamports, " signedLamports ", signedLamports);
 
             if (origLamports !== signedLamports)
                 throw new Error("Lamports mismatch");
@@ -264,11 +320,11 @@ export async function verifyPayment({
         }
 
     } catch (err) {
-        console.log("err in verify payments ");
+        console.log("err in verify payments ", err);
         return {
-            success  : false,
+            success: false,
             txnSignature,
-            amount : 2
+            amount: 2
         }
     }
 

@@ -142,6 +142,7 @@ async function paymentDone({
 
   try {
     
+    console.log("Calling verifyPayment with:", { sessionId, txnSignature, socketId: SocketId });
     const result = await verifyPayment({
       sessionId,
       txnSignature,
