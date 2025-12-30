@@ -3,10 +3,14 @@ import { prisma } from "../db/src/prisma.js";
 import crypto from "crypto";
 import { createSolTransferTxn } from "../lib/solana.js";
 import type { RequestState } from "@clerk/backend/internal";
+// import client from "../lib/redis.js";
+// import RedisClient from "../lib/redis.js";
+import { RedisClient } from "../index.js";
 // import { redis } from "../redis.js";
 
 export async function initiateCheckout(req: Request, res: Response) {
   try {
+    // await RedisClient.connect();
     const invoiceId = req.params.invoiceId as string;
     console.log("invoice Id : ", invoiceId);
 
@@ -24,19 +28,30 @@ export async function initiateCheckout(req: Request, res: Response) {
       // console.log("invoice ksdns", invoice)
       return res.status(404).json({ message: "Invoice not found" });
     }
-    let existing = await prisma.checkoutSession.findFirst({
-      where: {
-        invoiceId,
-        status: "PENDING", 
-      },
-    });
     const txn = await  createSolTransferTxn({
       senPubKey : walletAddress as string,
       recPubKey : invoice.solAddress as string,
       amount : invoice.amount.toNumber() 
     });
-    if (existing) {
-      if (existing.buyerWallet === walletAddress) {
+
+    
+    const sessionId = await RedisClient.get(invoiceId);// <----- redis call 
+
+    if(sessionId) {
+      let existing = await prisma.checkoutSession.findFirst({
+        where: {
+          invoiceId,
+          id : sessionId,
+          
+          status: "PENDING", 
+        },
+      });
+
+      
+      if (existing && existing.buyerWallet === walletAddress) {
+        const ttl = await RedisClient.ttl(invoiceId);
+        console.log("existing session found :", existing.id);
+        console.log("resuming session :", existing.id);
         const updatedBlockHash = await prisma.checkoutSession.update({
           where : {
             id : existing.id
@@ -45,17 +60,33 @@ export async function initiateCheckout(req: Request, res: Response) {
             txHash : txn
           }
         }) 
+        // await RedisClient.disconnect();
         return res.json({
           status: "resumed",
           session : updatedBlockHash,
-          invoice
+          invoice , 
+          ttl 
+          
         });
       }
-      return res.status(403).json({
-        status: "active_on_other_device",
-        message: "Checkout already active on a different device",
-      });
+      if(existing) {
+        const ttl = await RedisClient.ttl(invoiceId);
+
+        // await RedisClient.disconnect();
+        return res.status(204).json({
+          status: "active_on_other_device",
+          message: "Checkout already active on a different device",
+          ttl 
+        });
+      }
     }
+
+
+
+
+
+
+    
 
     const sessionKey = `cs_${crypto.randomBytes(16).toString("hex")}`;
 
@@ -75,11 +106,18 @@ export async function initiateCheckout(req: Request, res: Response) {
         expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 min
       },
     });
+    const session = await RedisClient.set(invoiceId , newSession.id, 'EX', 5 * 60);
+    const ttl = await RedisClient.ttl(invoiceId);
+    console.log("new session created :", newSession.id);
+    // await RedisClient.disconnect();
+
     return res.json({
       status: "created",
       session : newSession,
-      invoice
+      invoice ,
+      ttl : ttl
     });
+    
 
   } catch (err) {
     console.error("INIT CHECKOUT ERROR:", err);
@@ -111,33 +149,35 @@ export async function updateSocket(req : Request , res : Response) {
     // }
     console.log("in ceckput update ", invoiceId);
     console.log(socketId, sessionId);
+    const redisSessionId = await RedisClient.get(invoiceId);
 
+    if(redisSessionId && redisSessionId === sessionId) {
 
-    const session = await prisma.checkoutSession.findUnique({
-      where : {
-        id : sessionId,
-        invoiceId : invoiceId
-      }
-    });
-
-
-    if(!session ) {
+      const session = await prisma.checkoutSession.findUnique({
+        where : {
+          id : sessionId,
+          invoiceId : invoiceId
+        }
+      });
+      
+      if(!session ) {
         return res.status(404).json({ message: "session not found" });
-    }
-
-    const updatedSession = await prisma.checkoutSession.update({
-      where : {
-        id : sessionId
-      }, 
-      data : {
-        socketid : socketId
       }
-    });
-
-
-    res.status(200).json({
-      updatedSession 
-    });
+      
+      const updatedSession = await prisma.checkoutSession.update({
+        where : {
+          id : sessionId
+        }, 
+        data : {
+          socketid : socketId
+        }
+      });
+      
+      
+      res.status(200).json({
+        updatedSession 
+      });
+    }
   
   } catch(err) {
    console.error("INIT CHECKOUT ERROR:", err);

@@ -10,3 +10,4 @@
 - Maximum amount of data per 30 second: 100 MB
 
 
+2. create docs for the developers for copy pasting.

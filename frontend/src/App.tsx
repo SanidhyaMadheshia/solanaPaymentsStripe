@@ -5,7 +5,7 @@ import './App.css'
 import { Route, Routes } from 'react-router'
 import { ClerkProvider } from '@clerk/clerk-react'
 import SignupPage from './components/pages/signup/Signup'
-
+// import "./index.css"
 import DeveloperDashboard from './components/pages/dashboard/Page'
 import Checkout from './components/pages/checkout/Page'
 import Landing from './components/pages/landingpage/Page'

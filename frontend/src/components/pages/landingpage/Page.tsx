@@ -9,7 +9,7 @@ import Footer from "./footer"
 
 export default function Landing() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background landing-theme">
       <Header />
       <Hero />
       <Features />

@@ -103,4 +103,12 @@ export interface InvoiceResponse {
   status: string;
   session: Session | null;   // session may exist or may be null
   invoice: Invoice;
+  ttl : number
+}
+
+export interface InvoiceResponseERR {
+  status: string;
+  message: string;
+  ttl : number
+  
 }

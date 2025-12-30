@@ -14,11 +14,22 @@ import http from "http";
 import { Server } from "socket.io";
 import { initSocket } from "./lib/socket.js";
 import invoiceRouter from "./routes/invoice.route.js"
+// import RedisClient from "./lib/redis.js";
+import {Redis} from "ioredis";
 
 
 dotenv.config();
 
+export const RedisClient = new  Redis(process.env.REDIS_URL!, {
+  tls : {},
+  maxRetriesPerRequest : null,
+  enableReadyCheck : false,
+  connectTimeout : 10000
+});
 
+RedisClient.on("connect", ()=> {
+  console.log("Redis connected !!");
+})
 
 export const app = express();
 app.use(cors({
@@ -49,14 +60,19 @@ app.get("/test", (req, res )=> {
     });
 
 })
+// console.log(process.env.REDIS_URL);
+
+// await RedisClient.connect();
+// RedisClient.set("foo", "bar");
+
+// await RedisClient.disconnect();
 
 
-
-
-
+// await RedisClient.connect();
 
 
 server.listen(3003, () => {
+  // console.log()// <--- Ping pong 
   console.log("🚀 Server running on http://localhost:3003");
 });
 

@@ -32,7 +32,9 @@ export async function createSessionUrl(req: CustomApiRequest, res: Response) {
       return res.status(404).json({ message: "Product or price not found." });
     }
 
-    const priceObj = product.prices.find((p) => p.id === price_id);
+    const priceObj = product.prices.find((p : {
+      id : string;
+    }) => p.id === price_id);
 
     const invoice = await prisma.invoice.create({
       data: {

@@ -5,7 +5,7 @@ import { socket } from '../../../lib/socket';
 import axios from 'axios';
 
 
-import type { InvoiceResponse, Invoice, Session } from '@/lib/types';
+import type { InvoiceResponse, Invoice, Session, InvoiceResponseERR } from '@/lib/types';
 import { pay } from '@/lib/solana';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { WalletButton } from '@/components/connectButton';
@@ -44,13 +44,12 @@ export default function Checkout() {
 
   // 1️⃣ Fetch invoice + ask backend if session can be initiated
   useEffect(() => {
+    console.log("connected changed :", connected);
     async function fetchInvoice() {
       try {
 
-        // console.log(solana?.s  electedAccount?.address);
-
-
-        const { data } = await axios.get<InvoiceResponse>(
+        // console.log(solana?.selectedAccount?.address);
+        const { data } = await axios.get<InvoiceResponse | InvoiceResponseERR>(
           `${import.meta.env.VITE_BACKEND_URL}/invoice/${invoiceId}`, {
           headers: {
             "x-wallet-address": publicKey?.toString() || "",
@@ -58,7 +57,19 @@ export default function Checkout() {
         }
         );
 
+
         console.log("invoice data", data);
+        if (!(data && 'invoice' in data)) {
+          // console.error("invoice fetch error", data);
+          alert(data.message + data.status || "Error fetching invoice");
+          setLoadingInvoice(false);
+          window.location.href = "/failure";
+          return;
+        }
+        if(data.invoice.status === "PAID") {
+          window.location.href = data.invoice.successUrl;
+          return;
+        }
 
         setInvoice(data.invoice);
         setSession(data.session!);
@@ -69,21 +80,6 @@ export default function Checkout() {
         setWalletAddress(publicKey?.toString() || "");
         setSolanaAddress(data.invoice.solAddress || '');
         socket.connect();
-
-        socket.on("connect", async () => {
-
-          console.log("socketId : ", socket.id);
-          await axios.post(
-            `${import.meta.env.VITE_BACKEND_URL}/invoice/${invoiceId}`, {
-            socketId: socket.id,
-            sessionId: data.session?.id
-
-          }
-          );
-          socket.emit("payment:initiate", (invoiceId as string));
-        });
-
-        if (!socket.connected) socket.connect();
 
         const onConnect = async () => {
           console.log("socketId : ", socket.id);
@@ -153,12 +149,22 @@ export default function Checkout() {
   const handlePayment = async () => {
     try {
       setIsPaying(true);
-
+      console.log("pay paramms : ", {
+        txBase64: session?.txHash!,
+        sendTransaction,
+        connection,
+      });
+           
       const signature = await pay({
         txBase64: session?.txHash!,
         sendTransaction,
         connection,
       });
+
+      if(!signature) {
+        window.location.href=invoice.cancelUrl;
+        return;
+      }
 
       setIsPaying(false);
       socket.emit("Client:PaymentDone", {

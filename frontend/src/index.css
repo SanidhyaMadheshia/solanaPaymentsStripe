@@ -11,14 +11,14 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.55 0.22 260);          /* purple */
+  --primary-foreground: oklch(0.985 0.02 260);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent:  oklch(0.55 0.24 200);           /* cyan */
+  --accent-foreground: oklch(0.985 0.02 200);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
@@ -48,14 +48,14 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.60 0.18 260);
+  --primary-foreground: oklch(0.985 0.02 260);   /* bright text for purple */
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.58 0.20 200);
+  --accent-foreground: oklch(0.985 0.02 200);    /* bright text for cyan */
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: oklch(1 0 0 / 10%);
@@ -124,4 +124,40 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Landing page theme (scoped to landing page only) */
+.landing-theme {
+  --background: oklch(0.05 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.08 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.08 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.6 0.25 270);
+  --primary-foreground: oklch(0.98 0 0); /* consider oklch(0.98 0.02 270) for slightly non-gray text */
+  --secondary: oklch(0.65 0.2 160);
+  --secondary-foreground: oklch(0.08 0 0);
+  --muted: oklch(0.2 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.65 0.2 160);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.15 0 0);
+  --input: oklch(0.12 0 0);
+  --ring: oklch(0.6 0.25 270);
+}
+
+/* Dark mode version for landing page (if you use .dark on body) */
+.dark .landing-theme {
+  --background: oklch(0.05 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.08 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.60 0.18 270);
+  --primary-foreground: oklch(0.98 0.02 270);
+  --accent: oklch(0.58 0.20 200);
+  --accent-foreground: oklch(0.98 0.02 200);
+  /* adjust other variables as needed */
 }

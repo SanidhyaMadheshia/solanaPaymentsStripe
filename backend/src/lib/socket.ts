@@ -153,7 +153,15 @@ async function paymentDone({
       console.log("Payment verified successfully.");
 
       // Emit back to the correct client
-
+      const invoice = await prisma.invoice.update({
+        where : {
+          id : session.invoiceId
+        },
+        data : {
+          status : "PAID"
+        }
+      });
+      
       const payment = await prisma.payment.create({
         data : {
           invoiceId : session.invoiceId,

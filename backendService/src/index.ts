@@ -1,17 +1,16 @@
 import express from "express";
-
 import cors from "cors";
 // import router from "./routes/user.route.js"
-
 import dotenv from "dotenv";
 // import router from "./routes/user.route.js";
 import http from "http";
 import { Server } from "socket.io";
-
 import SolanaRouter from "./routes/solana.route.js"
-
-// dotenv.config();
-
+import { Connection } from "@solana/web3.js";
+dotenv.config();
+export const connection = new Connection(
+  process.env.QUICKNODE_RPC!
+);
 
 
 export const app = express();
@@ -21,13 +20,7 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization", "x-wallet-address"],
     credentials: true,
   }));
-
-
-
-
 // app.options("*", cors());
-
-
 // app.use("/api/v1/", webHookRouter);
 app.use(express.json());
 

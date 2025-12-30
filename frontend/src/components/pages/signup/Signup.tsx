@@ -11,14 +11,6 @@ const SignupPage = () => {
   // const {session}= useSession();
   const {getToken} = useAuth();
 
-
-
-
-
-
-
-  
-
   async function handleProceed() {
 
     const clerkSessionToken = await getToken();

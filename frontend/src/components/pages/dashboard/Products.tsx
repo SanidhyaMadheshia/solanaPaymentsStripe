@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, ChevronDown, ChevronUp, Currency } from 'lucide-react';
+import { Plus, Trash2, Edit2, ChevronDown, ChevronUp, Currency ,Copy} from 'lucide-react';
 import type { Product, ProductPrice } from '../../../lib/types';
 import ProductPrices from './ProductsPrice';
 import axios from 'axios';
@@ -14,6 +14,7 @@ export default function Products() {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [productPrices, setProductPrices] = useState<Record<string, ProductPrice[]>>({});
   const data : DashboardContextType = useDashboard();
+
   // Mock data load
   useEffect(() => {
     console.log("use Effect is");
@@ -117,7 +118,13 @@ export default function Products() {
     setNewProductDescription('');
     setShowNewProductDialog(false);
   };
-
+  const copyProductId = async (productId: string) => {
+    try {
+      await navigator.clipboard.writeText(productId);
+    } catch (err) {
+      console.error('Failed to copy product ID', err);
+    }
+};
   const deleteProduct = (id: string, name: string) => {
     if (!confirm(`Delete "${name}"?`)) return;
     setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -227,6 +234,15 @@ export default function Products() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-white font-medium text-lg">{product.name}</h3>
+                        {/* Copy Product ID */}
+                        <button
+                          onClick={() => copyProductId(product.id)}
+                          title="Copy Product ID"
+                          className="p-1 hover:bg-[#1a1a1a] text-gray-400 hover:text-white rounded-md transition-colors"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+
                         <span className="px-2 py-1 bg-[#14F195]/10 text-[#14F195] text-xs rounded-full border border-[#14F195]/20">
                           Active
                         </span>

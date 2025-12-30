@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, DollarSign } from 'lucide-react';
+import { Plus, Trash2, DollarSign ,Copy} from 'lucide-react';
 import type { ProductPrice } from '../../../lib/types';
 import axios from 'axios';
 import { useDashboard, type Price } from '../../../context/dashboardContext';
@@ -105,7 +105,13 @@ export default function ProductPrices({ productId, onUpdate,productPrices }: Pro
   // 🔄 Trigger parent update callback if provided
   onUpdate?.();
 };
-
+const copyPriceId = async (priceId: string) => {
+  try {
+    await navigator.clipboard.writeText(priceId);
+  } catch (err) {
+    console.error('Failed to copy price ID', err);
+  }
+};
 
   const deletePrice = (id: string, label: string) => {
     if (!confirm(`Are you sure you want to delete "${label}" price?`)) return;
@@ -216,10 +222,21 @@ export default function ProductPrices({ productId, onUpdate,productPrices }: Pro
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-white font-medium">{price.label}</span>
+
+                  {/* Copy Price ID */}
+                  <button
+                    onClick={() => copyPriceId(price.id)}
+                    title="Copy Price ID"
+                    className="p-1 hover:bg-[#1a1a1a] text-gray-400 hover:text-white rounded-md transition-colors"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+
                   <span className="px-2 py-0.5 bg-[#14F195]/10 text-[#14F195] text-xs rounded border border-[#14F195]/20">
                     Active
                   </span>
                 </div>
+
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg font-semibold text-white">
                     {price.amount} {price.currency}
