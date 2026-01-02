@@ -184,3 +184,41 @@ export async function updateSocket(req : Request , res : Response) {
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+
+export async function fetchTransactionSignature(req: Request, res: Response) {
+  try {
+    const invoiceId = req.params.invoiceId as string;
+
+    if (!invoiceId) {
+      return res.status(400).json({ message: "invoiceId required" });
+    }
+    const invoice = await prisma.invoice.findUnique({
+      where: {
+        id: invoiceId
+      },
+      include : {
+        payments : true
+      }
+    });
+
+    if(!invoice) {
+      return res.status(404).json({ message: "Invoice not found" });
+    }
+    if(invoice.payments.length === 0) {
+      return res.status(404).json({ message: "No payments found for this invoice" });
+    }
+
+    const txSignature = invoice.payments.map((payment) => payment.txHash);
+    return res.json({
+      txnSignature: txSignature[0],
+      successUrl : invoice.successUrl,
+      amount : invoice.amount.toNumber(),
+      currency : invoice.currency,
+      productName : invoice.productName
+
+    });
+  } catch (err) {
+    console.error("FETCH TRANSACTION SIGNATURE ERROR:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}

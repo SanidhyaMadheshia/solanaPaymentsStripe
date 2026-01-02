@@ -58,7 +58,7 @@ export async function createSessionUrl(req: CustomApiRequest, res: Response) {
     return res.status(200).json({
       message: "Invoice created. Redirect customer to checkout.",
       invoice_id: invoice.id,
-      checkout_url: `https://yourgateway.com/checkout/${invoice.id}`,
+      checkout_url: `${process.env.FRONTEND_URL}/checkout/${invoice.id}`,
       amount: invoice.amount,
       currency: invoice.currency,
       expires_at: invoice.expiresAt,

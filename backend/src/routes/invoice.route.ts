@@ -2,7 +2,7 @@
 
 
 import {Router} from "express";
-import { initiateCheckout, updateSocket } from "../controllers/payerController.js";
+import { fetchTransactionSignature, initiateCheckout, updateSocket } from "../controllers/payerController.js";
 // // import { createApiKey, createProduct, createSessionUrl } from "../controllers/userApiController.js";
 // import { authJwtMiddleware } from "../middlewares/auth.js";
 
@@ -17,6 +17,7 @@ const router = Router();
 
 
 router.get("/:invoiceId", initiateCheckout);
+router.get("/txnSignature/:invoiceId",fetchTransactionSignature);
 router.post("/:invoiceId", updateSocket);
 
 

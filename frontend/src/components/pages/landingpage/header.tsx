@@ -22,7 +22,7 @@ export default function Header() {
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Docs
             </a>
           </nav>

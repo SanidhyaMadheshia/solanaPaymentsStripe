@@ -14,6 +14,9 @@ import { WalletContextProvider } from './providers/SolanaProvider'
 import { ChainContextProvider } from './context/ChainContextProvider'
 import { SelectedWalletAccountContextProvider } from './context/SelectedWalletAccountContextProvider'
 import { RpcContextProvider } from './context/RpcContextProvider'
+import Documentation from './components/pages/docs/page'
+import SuccessPage from './components/pages/checkout/SuccessPage'
+import Failure from './components/pages/checkout/Failure'
 // import Dashboard from './components/pages/dashboard/Page'
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -27,6 +30,13 @@ function App() {
     <>
       <Routes>
         <Route path='/' element={<Landing />} />
+        <Route path='/docs' element={<Documentation />} />
+        <Route path='/success/:invoiceId' element={
+          <SuccessPage/>
+        }/>
+        <Route path='/failure' element={
+          <Failure/>
+        }/>
         <Route path='/checkout/:invoiceId' element={
           <WalletContextProvider>
 

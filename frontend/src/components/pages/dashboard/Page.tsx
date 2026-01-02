@@ -37,7 +37,7 @@ export default function Dashboard() {
   const tabs = [
     { id: 'Configure' as TabType, label: 'Configure', icon: Key },
     { id: 'products' as TabType, label: 'Products', icon: Package },
-    { id: 'events' as TabType, label: 'Event Logs', icon: Activity },
+    // { id: 'events' as TabType, label: 'Event Logs', icon: Activity },
   ];
 
   return (

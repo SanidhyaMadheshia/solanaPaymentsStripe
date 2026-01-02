@@ -31,11 +31,6 @@ export default function Checkout() {
 
 
   const { invoiceId } = useParams();
-
-
-  // const {} = useContext()
-  // const solana = 
-  // const solana = useContext(SolanaContext);
   const { sendTransaction, connected, publicKey } = useWallet();
   console.log("connection : ", connected);
 
@@ -47,8 +42,6 @@ export default function Checkout() {
     console.log("connected changed :", connected);
     async function fetchInvoice() {
       try {
-
-        // console.log(solana?.selectedAccount?.address);
         const { data } = await axios.get<InvoiceResponse | InvoiceResponseERR>(
           `${import.meta.env.VITE_BACKEND_URL}/invoice/${invoiceId}`, {
           headers: {
@@ -56,9 +49,6 @@ export default function Checkout() {
           },
         }
         );
-
-
-        console.log("invoice data", data);
         if (!(data && 'invoice' in data)) {
           // console.error("invoice fetch error", data);
           alert(data.message + data.status || "Error fetching invoice");
@@ -67,23 +57,19 @@ export default function Checkout() {
           return;
         }
         if(data.invoice.status === "PAID") {
-          window.location.href = data.invoice.successUrl;
+          window.location.href = `/success/${invoiceId}`;
           return;
         }
-
         setInvoice(data.invoice);
         setSession(data.session!);
-
         setLoadingInvoice(false);
         setSessionAllowed(true);
         setIsConnected(true);
         setWalletAddress(publicKey?.toString() || "");
         setSolanaAddress(data.invoice.solAddress || '');
         socket.connect();
-
         const onConnect = async () => {
           console.log("socketId : ", socket.id);
-
           const res = await axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/invoice/${invoiceId}`,
             {
@@ -91,20 +77,14 @@ export default function Checkout() {
               sessionId: data.session?.id,
             }
           );
-
           console.log(res);
-
-
           socket.emit("payment:initiate", invoiceId as string);
         };
-
         socket.on("connect", onConnect);
-
         // cleanup
         return () => {
           socket.off("connect", onConnect);
         };
-
       } catch (err) {
         console.error(err);
         setLoadingInvoice(false);
@@ -116,10 +96,6 @@ export default function Checkout() {
     }
 
   }, [connected]);
-
-
-
-
   // Listen for backend verification event
   useEffect(() => {
     function handleVerified(data: any) {
@@ -127,12 +103,11 @@ export default function Checkout() {
 
       if (data?.success) {
         setIsVerified(true);
-        window.location.href = invoice.successUrl;
+        window.location.href = `/success/${invoiceId}`;
       }
     }
 
     socket.on("payment:verified", handleVerified);
-
     return () => {
       socket.off("payment:verified", handleVerified);
     };
@@ -162,7 +137,7 @@ export default function Checkout() {
       });
 
       if(!signature) {
-        window.location.href=invoice.cancelUrl;
+        window.location.href='/failure';
         return;
       }
 

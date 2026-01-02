@@ -3,6 +3,7 @@ import type { Server as HTTPServer } from "http";
 import { prisma } from "../db/src/prisma.js";
 import { verify } from "crypto";
 import { verifyPayment } from "./solana.js";
+import axios from "axios";
 
 let io: Server | null = null;
 
@@ -50,67 +51,6 @@ export const getIO = (): Server => {
   return io;
 };
 
-
-
-// async function paymentDone({
-
-//   txnSignature,
-//   sessionId,
-//   SocketId
-// }: {
-//   txnSignature: string,
-//   sessionId: string | undefined,
-//   SocketId: string
-// }) {
-
-//   if (!txnSignature || sessionId || SocketId) {
-//     console.log("insufficient paramenter");
-
-//     return;
-
-
-//   }
-
-
-//   const session = await prisma.checkoutSession.findFirst({
-//     where: {
-//       id: sessionId!,
-//       socketid: SocketId
-//     }
-//   });
-
-
-
-//   if (!session) return;
-
-//   const res =await  verifyPayment({ sessionId: sessionId!, txnSignature, socketId: SocketId });
-
-
-
-
-
-
-//   if(!res.success) {
-    
-
-//   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-// } 
-
-
-
 async function paymentDone({
   txnSignature,
   sessionId,
@@ -143,6 +83,7 @@ async function paymentDone({
   try {
     
     console.log("Calling verifyPayment with:", { sessionId, txnSignature, socketId: SocketId });
+    
     const result = await verifyPayment({
       sessionId,
       txnSignature,
@@ -173,7 +114,28 @@ async function paymentDone({
 
 
       console.log("payment done");
-      
+      const payload = {
+        invoiceId: invoice.id,
+        paymentId: payment.id,
+        status: "PAID",
+        amount: result.amount,
+        txHash: txnSignature
+      };
+      console.log("Sending webhook to:", invoice.webhookUrl, "with payload:", payload);
+      const res = await axios.post(invoice.webhookUrl!, payload);
+      //  const res = await fetch(invoice.webhookUrl!, {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify(payload),
+
+      // });
+      if (res.status >= 200 && res.status < 300) {
+        console.log("Webhook delivered successfully");
+      } else {
+        throw new Error("Webhook not acknowledged");
+      }
 
       getIO().to(SocketId).emit("payment:verified", {
         success: true,
