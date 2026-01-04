@@ -28,36 +28,36 @@ function App() {
 
   return (
     <>
-      <Routes>
-        <Route path='/' element={<Landing />} />
-        <Route path='/docs' element={<Documentation />} />
-        <Route path='/success/:invoiceId' element={
-          <SuccessPage/>
-        }/>
-        <Route path='/failure' element={
-          <Failure/>
-        }/>
-        <Route path='/checkout/:invoiceId' element={
-          <WalletContextProvider>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+        <Routes>
+          <Route path='/' element={<Landing />} />
+          <Route path='/docs' element={<Documentation />} />
+          <Route path='/success/:invoiceId' element={
+            <SuccessPage />
+          } />
+          <Route path='/failure' element={
+            <Failure />
+          } />
+          <Route path='/checkout/:invoiceId' element={
+            <WalletContextProvider>
 
-            <ChainContextProvider>
-              <SelectedWalletAccountContextProvider>
-                <RpcContextProvider>
-
-
-                  <Checkout />
+              <ChainContextProvider>
+                <SelectedWalletAccountContextProvider>
+                  <RpcContextProvider>
 
 
-                </RpcContextProvider>
-              </SelectedWalletAccountContextProvider>
-            </ChainContextProvider>
+                    <Checkout />
 
-          </WalletContextProvider>
-        } />
-        <Route
-          path='/*'
-          element={
-            <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+
+                  </RpcContextProvider>
+                </SelectedWalletAccountContextProvider>
+              </ChainContextProvider>
+
+            </WalletContextProvider>
+          } />
+          <Route
+            path='/*'
+            element={
 
               <Routes>
 
@@ -69,10 +69,10 @@ function App() {
                   </DashboardProvider>
                 } />
               </Routes>
-            </ClerkProvider>
-          }
-        />
-      </Routes>
+            }
+          />
+        </Routes>
+      </ClerkProvider>
     </>
   )
 }
