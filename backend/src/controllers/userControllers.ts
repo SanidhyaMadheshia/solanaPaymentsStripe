@@ -236,7 +236,7 @@ export async function exchangeToken(req : Request , res : Response) {
             jwtKey : process.env.CLERK_JWT_KEY!,
             secretKey : process.env.CLERK_SECRET_KEY!,
             publishableKey : process.env.CLERK_PUBLISHABLE_KEY!,
-            authorizedParties: ['http://localhost:5173'],
+            authorizedParties: [process.env.FRONTEND_URL!],
         });
 
         const clerkUserId = toAuth()?.userId;
