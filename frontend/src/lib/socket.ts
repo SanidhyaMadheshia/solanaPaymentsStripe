@@ -3,7 +3,7 @@
 import { io, Socket } from "socket.io-client";
 
 // Define your backend URL
-const SOCKET_URL = "http://localhost:3003"; // change in production
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL // change in production
 
 // Define types (optional but recommended)
 interface ServerToClientEvents {
