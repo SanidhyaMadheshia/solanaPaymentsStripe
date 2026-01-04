@@ -164,9 +164,9 @@ import {
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 
 import {
-  PhantomWalletAdapter,
+  PhantomWalletAdapter
   
-  SolflareWalletAdapter
+  // SolflareWalletAdapter
 } from "@solana/wallet-adapter-wallets";
 
 export const WalletContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

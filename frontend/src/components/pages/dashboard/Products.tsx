@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, ChevronDown, ChevronUp, Currency ,Copy} from 'lucide-react';
+import { Plus, Trash2, Edit2, ChevronDown, ChevronUp ,Copy} from 'lucide-react';
 import type { Product, ProductPrice } from '../../../lib/types';
 import ProductPrices from './ProductsPrice';
 import axios from 'axios';

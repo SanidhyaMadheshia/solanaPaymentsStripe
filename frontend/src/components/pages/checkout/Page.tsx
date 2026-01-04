@@ -21,12 +21,12 @@ export default function Checkout() {
   const [loadingInvoice, setLoadingInvoice] = useState(true);
   const [session, setSession] = useState<Session>();
   const [sessionAllowed, setSessionAllowed] = useState<boolean>(true);
-  const [sessionExpired, setSessionExpired] = useState(false);
-  const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
+  // const [sessionExpired, setSessionExpired] = useState(false);
+  const [sessionTimeLeft, ] = useState(null);
   const [solanaAddress, setSolanaAddress] = useState<string>('');
-  const [isVerifying, setIsVerifying] = useState<boolean>(true);
-  const [txnCompleted, setTxnCompleted] = useState<boolean>(false);
-  const [isVerified, setIsVerified] = useState<boolean>(false);
+  // const [isVerifying, setIsVerifying] = useState<boolean>(true);
+  // const [txnCompleted, setTxnCompleted] = useState<boolean>(false);
+  const [, setIsVerified] = useState<boolean>(false);
   const [isWaitingForVerification, setIsWaitingForVerification] = useState(false);
 
 

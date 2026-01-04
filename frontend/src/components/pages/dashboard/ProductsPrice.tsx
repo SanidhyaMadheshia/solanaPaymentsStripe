@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, DollarSign ,Copy} from 'lucide-react';
 import type { ProductPrice } from '../../../lib/types';
 import axios from 'axios';
-import { useDashboard, type Price } from '../../../context/dashboardContext';
+import { useDashboard} from '../../../context/dashboardContext';
 
 interface ProductPricesProps {
   productId: string;

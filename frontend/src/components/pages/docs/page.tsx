@@ -1,6 +1,6 @@
 "use client"
 
-import { Copy, Check, Zap, AlertCircle, CheckCircle2, ArrowRight, Wallet } from "lucide-react"
+import { Copy, Check, Zap, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react"
 import { useState } from "react"
 
 export default function Documentation() {

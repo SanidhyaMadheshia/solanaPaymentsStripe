@@ -1,7 +1,7 @@
-import { signAndSendTransactionMessageWithSigners } from "@solana/kit";
+// import { signAndSendTransactionMessageWithSigners } from "@solana/kit";
 import { type Connection, Transaction } from "@solana/web3.js";
 
-import {useConnection, useWallet} from "@solana/wallet-adapter-react"
+// import {useConnection, useWallet} from "@solana/wallet-adapter-react"
 import type { WalletAdapterProps } from "@solana/wallet-adapter-base";
 
 

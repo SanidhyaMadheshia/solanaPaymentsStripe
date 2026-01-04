@@ -46,9 +46,9 @@ useEffect(() => {
     key_name: k.label ?? k.key_name ?? 'Unnamed key',
     key_prefix:
       (k.preview ??
-        (k.label ? `${k.label.slice(0, 15)}...` : '') ??
-        k.key_prefix ??
-        '').toString(),
+        (`${k.label.slice(0, 15)}...` ) 
+        // k.key_prefix ??
+        ).toString(),
     created_at: k.createdAt ?? k.created_at ?? new Date().toISOString(),
   }));
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Key, Package, Activity, Zap } from 'lucide-react';
+import { Key, Package, Zap } from 'lucide-react';
 import ApiKeys from './ApiKeys';
 import Products from './Products';
 import EventLogs from './EventLogs';
@@ -10,7 +10,7 @@ type TabType = 'Configure' | 'products' | 'events';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('Configure');
-  const { userId, sessionId, getToken, isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const { userData, loading } = useDashboard();
 
   useEffect(() => {
