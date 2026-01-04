@@ -10,6 +10,8 @@ const router = Router();
 
 router.get("/transaction/:txSignature", async (req, res) => {
   const { txSignature } = req.params;
+  console.log("Fetching transaction with signature :", txSignature);
+  
 
   const MAX_WAIT_MS = 60_000;     // 60s
   const POLL_INTERVAL_MS = 1_000;
