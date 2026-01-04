@@ -224,7 +224,7 @@ export async function exchangeToken(req : Request , res : Response) {
         console.log("Authorization Header : ", authHeader);
         const clerkSessionToken = authHeader.split(" ")[1];
         console.log("Clerk Session Token received : ", clerkSessionToken);
-        const webRequest = new Request(`http://localhost:5173${req.url}`, {
+        const webRequest = new Request(`${process.env.FRONTEND_URL}${req.url}`, {
             method: req.method,
             headers: {
                 authorization: `Bearer ${clerkSessionToken}`
