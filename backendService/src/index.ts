@@ -15,7 +15,7 @@ export const connection = new Connection(
 
 export const app = express();
 app.use(cors({
-    origin: ["http://localhost:5173", "https://veola-garni-ellie.ngrok-free.dev"],
+    origin: ["http://localhost:5173", "https://veola-garni-ellie.ngrok-free.dev", process.env.FRONTEND_URL!, process.env.BACKEND_URL!],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-wallet-address"],
     credentials: true,
