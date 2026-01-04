@@ -114,7 +114,7 @@ export async function decodeTransferSignature(signature: string) {
 
   // ⬇⬇⬇ KEEP THIS AS-IS (your requirement)
   const data = await axios.get<{ txSignature: ParsedTransactionWithMeta }>(
-    `http://localhost:3000/api/solana/services/transaction/${signature}`
+    `${process.env.BACKEND_SERVICE_URL}/api/solana/services/transaction/${signature}`
   );
 
   const txn = data.data.txSignature;
