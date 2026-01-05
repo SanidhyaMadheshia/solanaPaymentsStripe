@@ -1,10 +1,23 @@
 const express = require('express');
 
+const cors = require('cors');
 
 const app = express();
 
-app.use(express.json());
-app.post('/webhook', (req, res) => {
+// app.use(express.json());
+app.use(cors({
+    origin: ["http://localhost:5173", "https://solanapaymentsstripe.onrender.com"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-wallet-address"],
+    credentials: true,
+  }));
+
+//   app.andklfa(/kdf)
+
+
+app.post('/webhook',
+    express.raw({ type: 'application/json' }),
+    (req, res) => {
     console.log('Webhook received');
     console.log(req.body);
 
