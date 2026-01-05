@@ -17,6 +17,10 @@ import { RpcContextProvider } from './context/RpcContextProvider'
 import Documentation from './components/pages/docs/page'
 import SuccessPage from './components/pages/checkout/SuccessPage'
 import Failure from './components/pages/checkout/Failure'
+import About from './components/pages/trust/About'
+import Contact from './components/pages/trust/Contact'
+import PrivacyPolicy from './components/pages/trust/PrivacyPolicy'
+import Terms from './components/pages/trust/Terms'
 // import Dashboard from './components/pages/dashboard/Page'
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -31,6 +35,10 @@ function App() {
       <Routes>
         <Route path='/' element={<Landing />} />
         <Route path='/docs' element={<Documentation />} />
+        <Route path='/about' element={<About />} />
+        <Route path='/contact' element={<Contact />} />
+        <Route path='/privacy-policy' element={<PrivacyPolicy />} />
+        <Route path='/terms' element={<Terms />} />
         <Route path='/success/:invoiceId' element={
           <SuccessPage />
         } />
