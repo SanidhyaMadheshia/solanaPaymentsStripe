@@ -71,7 +71,7 @@ const SignupPage = () => {
               fallbackRedirectUrl={"/signup"}
             >
               <button className="w-full py-4 bg-gradient-to-r from-[#9945FF] via-[#8752F3] to-[#14F195] hover:opacity-90 text-white rounded-lg font-medium transition-all shadow-lg shadow-purple-500/20">
-                Continue with Google
+                Continue 
               </button>
             </SignInButton>
           </SignedOut>
