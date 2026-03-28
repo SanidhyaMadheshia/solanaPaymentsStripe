@@ -27,7 +27,9 @@ export default function Hero() {
         </p>
 
         <div className="flex flex-col gap-4 sm:flex-row items-center justify-center">
-          <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary via-primary to-accent px-6 py-3 font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary via-primary to-accent px-6 py-3 font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+            onClick={() => window.location.href = "/signup"}
+            >
             Start Building
             <ArrowRight className="h-4 w-4" />
           </button>
