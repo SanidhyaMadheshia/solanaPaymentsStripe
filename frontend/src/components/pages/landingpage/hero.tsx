@@ -31,7 +31,9 @@ export default function Hero() {
             Start Building
             <ArrowRight className="h-4 w-4" />
           </button>
-          <button className="rounded-lg border border-border px-6 py-3 font-medium text-foreground hover:bg-card transition-colors">
+          <button className="rounded-lg border border-border px-6 py-3 font-medium text-foreground hover:bg-card transition-colors"
+            onClick={() => window.location.href = "/docs"}
+            >
             View Docs
           </button>
         </div>
