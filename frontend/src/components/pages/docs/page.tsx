@@ -144,7 +144,7 @@ export default function Documentation() {
                 Create Invoice API
               </h3>
               <div className="bg-[#1a1a1a] border border-[#262626] rounded-xl p-6 space-y-4">
-                <CodeBlock id="create-invoice" language="http" code="POST /api/v1/userApi/getSessionUrl" />
+                <CodeBlock id="create-invoice" language="http" code="POST https://solanapaymentsstripe.onrender.com/api/v1/userApi/getSessionUrl" />
                 <div>
                   <p className="text-sm text-gray-400 mb-2">Request Body:</p>
                   <CodeBlock
