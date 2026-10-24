@@ -1,0 +1,10 @@
+[
+  {
+    "sku": "hoodie",
+    "name": "Solana Hoodie",
+    "description": "Heavyweight cotton hoodie.",
+    "displayPrice": "0.05 SOL",
+    "productId": "REPLACE_WITH_SOLPAY_PRODUCT_ID",
+    "priceId": "REPLACE_WITH_SOLPAY_PRICE_ID"
+  }
+]

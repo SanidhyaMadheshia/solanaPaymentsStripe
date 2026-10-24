@@ -1,163 +1,125 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+@import "@fontsource-variable/inter";
 
 @custom-variant dark (&:is(.dark *));
 
-:root {
-  /* Updated color theme for Sol Pay - dark background with purple and cyan accents */
-  --background:  oklch(0.145 0 0);
-  --foreground: oklch(1 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.55 0.22 260);          /* purple */
-  --primary-foreground: oklch(0.985 0.02 260);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent:  oklch(0.55 0.24 200);           /* cyan */
-  --accent-foreground: oklch(0.985 0.02 200);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+/* SolPay design tokens: near-black surfaces with Solana purple/green accents. */
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-bg: #09090b;
+  --color-surface: #0f0f12;
+  --color-surface-2: #151518;
+  --color-surface-3: #1c1c20;
+  --color-line: #232328;
+  --color-line-strong: #323238;
+  --color-fg: #fafafa;
+  --color-muted: #a1a1aa;
+  --color-subtle: #8b8b94;
+
+  --color-sol-purple: #9945ff;
+  --color-sol-violet: #8752f3;
+  --color-sol-green: #14f195;
+  --color-sol-teal: #00d1a0;
+
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-info: #38bdf8;
+
+  --radius-card: 14px;
+
+  --animate-fade-in: fade-in 160ms ease-out;
+  --animate-slide-up: slide-up 200ms ease-out;
 }
 
-.dark {
-  /* Dark mode tokens for Sol Pay */
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.60 0.18 260);
-  --primary-foreground: oklch(0.985 0.02 260);   /* bright text for purple */
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.58 0.20 200);
-  --accent-foreground: oklch(0.985 0.02 200);    /* bright text for cyan */
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-
-@theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  html {
+    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-bg text-fg font-sans;
+    min-height: 100vh;
+  }
+  * {
+    @apply border-line;
+  }
+  ::selection {
+    background: rgb(255 255 255 / 0.18);
+  }
+  button:not(:disabled), [role="button"], [role="tab"], [role="menuitem"], summary, label[for], select {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid #fafafa;
+    outline-offset: 2px;
+  }
+  code, pre, kbd {
+    @apply font-mono;
+  }
+  dialog::backdrop {
+    background: rgb(0 0 0 / 0.65);
+    backdrop-filter: blur(4px);
   }
 }
 
-/* Landing page theme (scoped to landing page only) */
-.landing-theme {
-  --background: oklch(0.05 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.08 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.08 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.6 0.25 270);
-  --primary-foreground: oklch(0.98 0 0); /* consider oklch(0.98 0.02 270) for slightly non-gray text */
-  --secondary: oklch(0.65 0.2 160);
-  --secondary-foreground: oklch(0.08 0 0);
-  --muted: oklch(0.2 0 0);
-  --muted-foreground: oklch(0.7 0 0);
-  --accent: oklch(0.65 0.2 160);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.15 0 0);
-  --input: oklch(0.12 0 0);
-  --ring: oklch(0.6 0.25 270);
+@utility text-gradient {
+  background-image: linear-gradient(90deg, var(--color-sol-purple), var(--color-sol-green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-/* Dark mode version for landing page (if you use .dark on body) */
-.dark .landing-theme {
-  --background: oklch(0.05 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.08 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.60 0.18 270);
-  --primary-foreground: oklch(0.98 0.02 270);
-  --accent: oklch(0.58 0.20 200);
-  --accent-foreground: oklch(0.98 0.02 200);
-  /* adjust other variables as needed */
+@utility bg-gradient-sol {
+  background-image: linear-gradient(135deg, var(--color-sol-purple), var(--color-sol-violet) 45%, var(--color-sol-green));
+}
+
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Restyle the wallet-adapter button so it matches the rest of the UI. */
+.wallet-adapter-button.wallet-adapter-button-trigger {
+  background: #fafafa;
+  color: #09090b;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  height: 48px;
+  justify-content: center;
+  width: 100%;
+}
+.wallet-adapter-button.wallet-adapter-button-trigger:not([disabled]):hover {
+  background: #e4e4e7;
+}
+.wallet-adapter-dropdown {
+  width: 100%;
+}
+.wallet-adapter-modal-wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  font-family: var(--font-sans);
 }

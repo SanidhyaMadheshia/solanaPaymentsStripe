@@ -1,79 +1,49 @@
-import express from "express";
+import { PrismaClient } from "@prisma/client";
+import { createApp } from "./app.js";
+import { loadConfig } from "./config.js";
+import { createChainClient, isValidPublicKey } from "./lib/solana.js";
+import { fetchWebhookSender } from "./lib/webhooks.js";
+import { startWorkers } from "./services/checkout.js";
+import type { Deps } from "./services/merchant.js";
 
-import cors from "cors";
-// import router from "./routes/user.route.js"
+async function main() {
+  // DIRECT_URL is only needed by migrations; default it so plain Postgres setups need one URL.
+  process.env.DIRECT_URL ||= process.env.DATABASE_URL;
+  const config = loadConfig();
+  if (config.PLATFORM_FEE_ADDRESS && !isValidPublicKey(config.PLATFORM_FEE_ADDRESS)) {
+    throw new Error("PLATFORM_FEE_ADDRESS is not a valid Solana address");
+  }
 
-import routerApi from "./routes/userApi.route.js"
+  const prisma = new PrismaClient();
+  await prisma.$connect();
 
-import dotenv from "dotenv";
+  const deps: Deps = {
+    prisma,
+    config,
+    chain: createChainClient(config.rpcUrl, config.SOLANA_COMMITMENT),
+    sendWebhook: fetchWebhookSender,
+  };
 
-import webHookRouter from "./routes/webhooks.route.js";
-import router from "./routes/user.route.js";
-// import router from "./routes/user.route.js";
-import http from "http";
-import { Server } from "socket.io";
-import { initSocket } from "./lib/socket.js";
-import invoiceRouter from "./routes/invoice.route.js"
-// import RedisClient from "./lib/redis.js";
-import {Redis} from "ioredis";
+  const app = createApp(deps);
+  const server = app.listen(config.PORT, () => {
+    console.log(`SolPay API listening on :${config.PORT} (cluster=${config.SOLANA_CLUSTER}, commitment=${config.SOLANA_COMMITMENT})`);
+    if (!config.REGISTRATION_ENABLED) console.log("Registration is disabled (REGISTRATION_ENABLED=false).");
+  });
+  const stopWorkers = startWorkers(deps);
 
-
-dotenv.config();
-
-export const RedisClient = new  Redis(process.env.REDIS_URL!, {
-  tls : {},
-  maxRetriesPerRequest : null,
-  enableReadyCheck : false,
-  connectTimeout : 10000
-});
-
-RedisClient.on("connect", ()=> {
-  console.log("Redis connected !!");
-})
-
-export const app = express();
-app.use(cors({
-    origin: ["http://localhost:5173", "https://veola-garni-ellie.ngrok-free.dev", process.env.FRONTEND_URL!, process.env.BACKEND_SERVICE_URL!],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-wallet-address"],
-    credentials: true,
-  }));
-
-
-const server = http.createServer(app);
-initSocket(server);
-
-// app.options("*", cors());
-
-
-app.use("/api/v1/", webHookRouter);
-app.use(express.json());
-
-app.use("/api/v1/invoice/", invoiceRouter); 
-app.use("/api/v1/user",router );
-
-app.use("/api/v1/userApi", routerApi);
-
-app.get("/test", (req, res )=> {
-    res.json({
-        msg : "iski mausi ka tun tun !! Chal gyaaaa !! "
+  const shutdown = (signal: string) => {
+    console.log(`${signal} received, shutting down`);
+    stopWorkers();
+    server.close(() => {
+      void prisma.$disconnect().finally(() => process.exit(0));
     });
+    setTimeout(() => process.exit(1), 10_000).unref();
+  };
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+}
 
-})
-// console.log(process.env.REDIS_URL);
-
-// await RedisClient.connect();
-// RedisClient.set("foo", "bar");
-
-// await RedisClient.disconnect();
-
-
-// await RedisClient.connect();
-
-
-server.listen(3003, () => {
-  // console.log()// <--- Ping pong 
-  console.log("🚀 Server running on http://localhost:3003");
+main().catch((err) => {
+  console.error(err instanceof Error ? err.message : err);
+  process.exit(1);
 });
-
-

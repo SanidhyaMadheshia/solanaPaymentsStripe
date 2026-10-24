@@ -1,13 +1,19 @@
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router";
+import App from "./App";
+import { ToastProvider } from "./components/Toast";
+import { AuthProvider } from "./lib/AuthProvider";
+import "./index.css";
 
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { BrowserRouter } from 'react-router'
-import "@solana/wallet-adapter-react-ui/styles.css";
-
-createRoot(document.getElementById('root')!).render(
-  // <StrictMode>
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </AuthProvider>
     </BrowserRouter>
-)
+  </StrictMode>,
+);

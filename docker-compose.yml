@@ -1,0 +1,61 @@
+# SolPay: Postgres + API + web (nginx serving the SPA and proxying /api).
+#   cp .env.example .env   # then edit
+#   docker compose up -d --build
+#   open http://localhost:8080
+name: solpay
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: solpay
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: solpay
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U solpay -d solpay"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://solpay:${POSTGRES_PASSWORD}@db:5432/solpay
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:8080}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      SOLANA_CLUSTER: ${SOLANA_CLUSTER:-devnet}
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-}
+      PUBLIC_SOLANA_RPC_URL: ${PUBLIC_SOLANA_RPC_URL:-}
+      SOLANA_COMMITMENT: ${SOLANA_COMMITMENT:-finalized}
+      PLATFORM_FEE_ADDRESS: ${PLATFORM_FEE_ADDRESS:-}
+      PLATFORM_FEE_LAMPORTS: ${PLATFORM_FEE_LAMPORTS:-0}
+      INVOICE_TTL_MINUTES: ${INVOICE_TTL_MINUTES:-30}
+      SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-10}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+    # Not published: reached through the web container at /api.
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_SITE_NAME: ${VITE_SITE_NAME:-}
+        VITE_CONTACT_EMAIL: ${VITE_CONTACT_EMAIL:-}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      API_UPSTREAM: http://backend:3003
+    ports:
+      - "${WEB_PORT:-8080}:80"
+
+volumes:
+  pgdata:

@@ -1,135 +1,169 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Neon: DATABASE_URL = pooled connection (-pooler host), DIRECT_URL = direct connection for migrations.
+  directUrl = env("DIRECT_URL")
 }
 
+// A merchant account (one per e-commerce store). The table keeps its historical
+// name ("User") so data from earlier versions migrates in place.
 model User {
-  id         String     @id @default(cuid())
-  clerkId    String     @unique
-  email      String     @unique
-  name       String?
-  pubKey     String[]                         // Solana wallet
-  apiKeys    ApiKey[]
-  products   Product[]
-  invoices   Invoice[]
-  // sessions   CheckoutSession[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id                String    @id @default(cuid())
+  email             String?   @unique // login email, stored lowercase
+  passwordHash      String?   // scrypt; null only for legacy rows that were never claimed
+  name              String?   // business name shown on the checkout
+  pubKey            String[]  // legacy, kept for backwards compatibility
+  walletAddress     String?   // default Solana address that receives payments
+  defaultWebhookUrl String?   // used when an API call does not pass webhook_url
+  webhookSecret     String?   // per-merchant HMAC secret for outgoing webhooks
+  apiKeys           ApiKey[]
+  products          Product[]
+  invoices          Invoice[]
+  sessions          Session[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+/// Dashboard login session. Only a SHA-256 hash of the bearer token is stored.
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String   @unique
+  userAgent  String?
+  expiresAt  DateTime
+  lastUsedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model ApiKey {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  keyHash   String
-  label     String?
-  revoked   Boolean   @default(false)
-  createdAt DateTime  @default(now())
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyHash    String
+  prefix     String?   // first characters of the key, safe to display
+  label      String?
+  revoked    Boolean   @default(false)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
 
   @@index([userId])
   @@index([keyHash])
 }
 
 model Product {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   description String?
   image       String?
+  active      Boolean  @default(true)
   prices      Price[]
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 }
 
 model Price {
-  id         String   @id @default(uuid())
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  label      String
-  amount     Decimal  @db.Decimal(20, 8)
-  currency   String   // "SOL" or "USDC"
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label     String
+  amount    Decimal  @db.Decimal(20, 8)
+  currency  String   // "SOL"
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
 }
 
-
 model Invoice {
-  id           String         @id @default(cuid())
-  userId       String
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String            @id @default(cuid())
+  userId               String
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  productId    String?
-  productName  String?
-  priceId      String?
-  priceAmount  Decimal?       @db.Decimal(20, 8)
-  currency     String
-  buyerEmail   String?
-  amount       Decimal        @db.Decimal(20, 8)
-  solAddress   String?        // Solana receiving address
-  status       InvoiceStatus  @default(PENDING)
-  successUrl   String?
-  cancelUrl    String?
-  expiresAt    DateTime?
-  paidAt       DateTime?
-  sessions     CheckoutSession[]
-  numberOfItems Int         @default(1)
-  webhookUrl   String?
-  txHash       String?
+  productId            String?
+  productName          String?
+  priceId              String?
+  priceAmount          Decimal?          @db.Decimal(20, 8)
+  currency             String
+  buyerEmail           String?
+  buyerWallet          String?
+  amount               Decimal           @db.Decimal(20, 8)
+  solAddress           String?           // Solana receiving address
+  status               InvoiceStatus     @default(PENDING)
+  successUrl           String?
+  cancelUrl            String?
+  expiresAt            DateTime?
+  paidAt               DateTime?
+  sessions             CheckoutSession[]
+  numberOfItems        Int               @default(1)
+  webhookUrl           String?
+  webhookAttempts      Int               @default(0)
+  webhookDeliveredAt   DateTime?
+  webhookLastError     String?
+  webhookNextAttemptAt DateTime?
+  txHash               String?           // signature of the confirmed payment
 
-  payments     Payment[]
+  payments             Payment[]
 
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Payment {
-  id           String         @id @default(cuid())
-  invoiceId    String
-  invoice      Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  id          String        @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
-  txHash       String         @unique
-  amount       Decimal        @db.Decimal(20, 8)
-  status       PaymentStatus  @default(UNCONFIRMED)
+  txHash      String        @unique
+  amount      Decimal       @db.Decimal(20, 8)
+  status      PaymentStatus @default(UNCONFIRMED)
 
-  detectedAt   DateTime       @default(now())
-  confirmedAt  DateTime?
+  detectedAt  DateTime      @default(now())
+  confirmedAt DateTime?
 
   @@index([invoiceId])
   @@index([txHash])
 }
+
 model CheckoutSession {
-  id           String           @id @default(cuid())
-  // sessionKey   String           @unique      // Public token like "cs_abc123"
+  id          String         @id @default(cuid())
 
-  // userId       String
-  // user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoiceId   String
+  invoice     Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
-  invoiceId    String
-  invoice      Invoice          @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  buyerWallet String
+  buyerEmail  String?
+  unsignedTx  String         @map("txHash") // base64 unsigned transaction handed to the wallet
+  txSignature String?        @unique        // signature submitted by the buyer
+  submittedAt DateTime?
+  verifyError String?
 
-  buyerWallet  String
-  buyerEmail   String?
-  txHash     String
+  status      CheckoutStatus @default(PENDING)
+  expiresAt   DateTime
+  completedAt DateTime?
 
-  socketid    String?
-  status       CheckoutStatus   @default(PENDING)
-  expiresAt    DateTime         // e.g., now() + 10 minutes
-  completedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
-  // @@index([userId])
   @@index([invoiceId])
 }
+
 enum CheckoutStatus {
   PENDING
   COMPLETED
   EXPIRED
   CANCELLED
+  FAILED
 }
 
 enum InvoiceStatus {
@@ -138,7 +172,6 @@ enum InvoiceStatus {
   EXPIRED
   CANCELLED
 }
-
 
 enum PaymentStatus {
   UNCONFIRMED

@@ -1,88 +1,86 @@
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
-import './App.css'
-import { Route, Routes } from 'react-router'
-import { ClerkProvider } from '@clerk/clerk-react'
-import SignupPage from './components/pages/signup/Signup'
-// import "./index.css"
-import DeveloperDashboard from './components/pages/dashboard/Page'
-import Checkout from './components/pages/checkout/Page'
-import Landing from './components/pages/landingpage/Page'
-import { DashboardProvider } from './context/dashboardContext'
-import { WalletContextProvider } from './providers/SolanaProvider'
-import { ChainContextProvider } from './context/ChainContextProvider'
-import { SelectedWalletAccountContextProvider } from './context/SelectedWalletAccountContextProvider'
-import { RpcContextProvider } from './context/RpcContextProvider'
-import Documentation from './components/pages/docs/page'
-import SuccessPage from './components/pages/checkout/SuccessPage'
-import Failure from './components/pages/checkout/Failure'
-import About from './components/pages/trust/About'
-import Contact from './components/pages/trust/Contact'
-import PrivacyPolicy from './components/pages/trust/PrivacyPolicy'
-import Terms from './components/pages/trust/Terms'
-// import Dashboard from './components/pages/dashboard/Page'
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+import { lazy, Suspense, useEffect } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router";
+import { Spinner } from "./components/ui";
+import Landing from "./pages/landing/Landing";
+import NotFound from "./pages/NotFound";
 
-if (!PUBLISHABLE_KEY) {
-  throw new Error('Add your Clerk Publishable Key to the .env file')
+// Heavy routes are code-split: wallet libraries only load on the checkout page.
+const Docs = lazy(() => import("./pages/docs/Docs"));
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const About = lazy(() => import("./pages/trust/About"));
+const Contact = lazy(() => import("./pages/trust/Contact"));
+const PrivacyPolicy = lazy(() => import("./pages/trust/PrivacyPolicy"));
+const Terms = lazy(() => import("./pages/trust/Terms"));
+const CheckoutPage = lazy(() => import("./pages/checkout/CheckoutPage"));
+const SuccessPage = lazy(() => import("./pages/checkout/SuccessPage"));
+const FailurePage = lazy(() => import("./pages/checkout/FailurePage"));
+const DashboardLayout = lazy(() => import("./pages/dashboard/DashboardLayout"));
+const Overview = lazy(() => import("./pages/dashboard/Overview"));
+const Payments = lazy(() => import("./pages/dashboard/Payments"));
+const Products = lazy(() => import("./pages/dashboard/Products"));
+const ApiKeys = lazy(() => import("./pages/dashboard/ApiKeys"));
+const Integration = lazy(() => import("./pages/dashboard/Integration"));
+const Settings = lazy(() => import("./pages/dashboard/Settings"));
+
+function PageFallback() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <Spinner className="h-6 w-6 text-muted" />
+    </div>
+  );
 }
-function App() {
-  // const [count, setCount] = useState(0)
 
+/** Scroll to top (or to the #hash target) on navigation. */
+function ScrollManager() {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (hash) {
+      const el = document.getElementById(hash.slice(1));
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+    }
+    window.scrollTo(0, 0);
+  }, [pathname, hash]);
+  return null;
+}
+
+export default function App() {
   return (
     <>
-      <Routes>
-        <Route path='/' element={<Landing />} />
-        <Route path='/docs' element={<Documentation />} />
-        <Route path='/about' element={<About />} />
-        <Route path='/contact' element={<Contact />} />
-        <Route path='/privacy-policy' element={<PrivacyPolicy />} />
-        <Route path='/terms' element={<Terms />} />
-        <Route path='/success/:invoiceId' element={
-          <SuccessPage />
-        } />
-        <Route path='/failure' element={
-          <Failure />
-        } />
-        <Route path='/checkout/:invoiceId' element={
-          <WalletContextProvider>
+      <ScrollManager />
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
 
-            <ChainContextProvider>
-              <SelectedWalletAccountContextProvider>
-                <RpcContextProvider>
+          <Route path="/checkout/:invoiceId" element={<CheckoutPage />} />
+          <Route path="/success/:invoiceId" element={<SuccessPage />} />
+          <Route path="/failure" element={<FailurePage />} />
 
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Overview />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="products" element={<Products />} />
+            <Route path="api-keys" element={<ApiKeys />} />
+            <Route path="integration" element={<Integration />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
 
-                  <Checkout />
-
-
-                </RpcContextProvider>
-              </SelectedWalletAccountContextProvider>
-            </ChainContextProvider>
-
-          </WalletContextProvider>
-        } />
-        <Route
-          path='/*'
-          element={
-
-            <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-              <Routes>
-
-                <Route path='/signup' element={<SignupPage />} />
-                <Route path='/user/dashboard' element={
-                  <DashboardProvider>
-
-                    <DeveloperDashboard />
-                  </DashboardProvider>
-                } />
-              </Routes>
-            </ClerkProvider>
-          }
-        />
-      </Routes>
+          {/* Old URLs from the Clerk-based version. */}
+          <Route path="/signup" element={<Navigate to="/register" replace />} />
+          <Route path="/user/dashboard" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </>
-  )
+  );
 }
-
-export default App
